@@ -10,10 +10,19 @@
 #define container_of(ptr, struct_type, member) \
 	((struct_type *)((char *)(ptr) - (char *)(&(((struct_type *)0)->member))))
 
+#define lc_list_next_entry(entry, entry_type, member) \
+	container_of((entry)->member.next, entry_type, member)
+
 #define lc_list_for_each_entry(pos, list_head, entry_type, member) \
 	for ((pos) = container_of((list_head)->next, entry_type, member); \
 	     &(pos)->member != (list_head); \
 	     (pos) = container_of((pos)->member.next, entry_type, member))
+
+#define lc_list_for_each_entry_safe(pos, temp, list_head, entry_type, member) \
+	for ((pos) = container_of((list_head)->next, entry_type, member), \
+	     (temp) = lc_list_next_entry(pos, entry_type, member); \
+	     &(pos)->member != (list_head); \
+	     (pos) = (temp), (temp) = lc_list_next_entry((temp), entry_type, member))
 
 #define lc_list_for_each_entry_reverse(pos, list_head, entry_type, member) \
 	for ((pos) = container_of((list_head)->prev, entry_type, member); \
@@ -33,6 +42,19 @@
 #endif 
 
 #define lc_err(fmt, ...)      printf("[LC_ERR]"fmt, ##__VA_ARGS__)
+
+
+struct lc_parse_ctrl_blk {
+	bool item_en;
+	int char_idx;
+	int name_idx;
+	int value_idx;
+	int ref_name_idx;
+	int curr_state;
+	int next_state;
+	uint32_t assign_type;
+	struct lc_cfg_item *ref_item;
+};
 
 /*************************************************************************************
  * @brief: parse line and get the hash value (BKDR Hash Function).
@@ -116,6 +138,41 @@ static void lc_dump_cfg(struct lc_list_node *cfg_head)
 }
 
 /*************************************************************************************
+ * @brief: free a cfg list.
+ *
+ * @cfg_head: head of the list of the item.
+ *
+ * @return: void.
+ ************************************************************************************/
+static void lc_free_cfg(struct lc_list_node *cfg_head)
+{
+	struct lc_cfg_item *pos;
+	struct lc_cfg_item *tmp;
+
+	if (lc_list_is_empty(cfg_head))
+		return;
+
+	lc_list_for_each_entry_safe(pos, tmp, cfg_head, struct lc_cfg_item, node) {
+		free(pos);
+	}
+
+	lc_list_init(cfg_head);
+}
+
+/*************************************************************************************
+ * @brief: free memory.
+ *
+ * @ctrl_blk: control block.
+ *
+ * @return: cfg_item.
+ ************************************************************************************/
+void light_config_free(struct lc_ctrl_blk *ctrl_blk)
+{
+	lc_free_cfg(&ctrl_blk->default_cfg_head);
+	lc_free_cfg(&ctrl_blk->menu_cfg_head);
+}
+
+/*************************************************************************************
  * @brief: find a cfg item.
  *
  * @name: name.
@@ -123,7 +180,7 @@ static void lc_dump_cfg(struct lc_list_node *cfg_head)
  *
  * @return: cfg_item.
  ************************************************************************************/
-static struct lc_cfg_item *lm_find_cfg_item(char *name, struct lc_list_node *cfg_head)
+static struct lc_cfg_item *lc_find_cfg_item(char *name, struct lc_list_node *cfg_head)
 {
 	struct lc_cfg_item *pos;
 
@@ -287,7 +344,8 @@ int light_config_init(struct lc_ctrl_blk *ctrl_blk, uint32_t mem_uplimit,
 		return LC_PARSE_RES_ERR_MEMORY_FAULT;
 	}
 
-	if ((line_buff_size > LC_LINE_BUFF_SIZE) || (mem_uplimit > LC_MEM_UPLIMIT)) {
+	if ((line_buff_size < LC_LINE_BUFF_SIZE_MIN) || (line_buff_size > LC_LINE_BUFF_SIZE_MAX) ||
+	    (mem_uplimit > LC_MEM_UPLIMIT)) {
 		lc_err("line_buff_size[%d] or mem_uplimit[%d] is too large\n",
 		        line_buff_size, mem_uplimit);
 		return LC_PARSE_RES_ERR_LINE_BUFF_OVERFLOW;
@@ -359,32 +417,92 @@ static bool lc_parse_options_match(struct lc_ctrl_blk *ctrl_blk,
  * 
  * @return parse result.
  ************************************************************************************/
-int light_config_parse_line(struct lc_ctrl_blk *ctrl_blk)
+int light_config_parse_line(struct lc_ctrl_blk *ctrl_blk, uint32_t cfg_type)
 {
-	int i = 0;
-	int curr_state = 0;
-	int next_state = 0;
-	char ch = ctrl_blk->line_buff[i++];
+	int ret;
+	char ch;
+	struct lc_parse_ctrl_blk cb;
 
+	/* check parameters */
 	if (ctrl_blk == NULL) {
 		lc_err("ctrl_blk is NULL\n");
 		return LC_PARSE_RES_ERR_CTRL_BLK_INVALID;
 	}
 
+	if ((cfg_type != LC_CFG_TYPE_DEFAULT) && (cfg_type != LC_CFG_TYPE_MENU)) {
+		lc_err("cfg_type[%d] is invalid\n", cfg_type);
+		return LC_PARSE_RES_ERR_CFG_TYPE_INVALID;
+	}
+
+	/* initialize parse control block */
+	memset(&cb, 0, sizeof(cb));
+	cb.assign_type = LC_ASSIGN_TYPE_DIRECT;
+	ch = ctrl_blk->line_buff[cb.char_idx++];
 	ctrl_blk->colu_num = 0;
 
+	/* parse line accroding to state machine */
 	while (ch != '\0') {
-		next_state = light_config_parse_state_get_next(curr_state, ch);
-		if (next_state < 0)
-			return next_state;
+		cb.next_state = light_config_parse_state_get_next(cb.curr_state, ch);
+		if (cb.next_state < 0)
+			return cb.next_state;
 
-		if (next_state == LC_PARSE_STATE_INCLUDE)
-			return LC_PASER_RES_OK_INCLUDE;
+		/* parse line */
+		switch (cb.next_state) {
+		case 1:
+			ctrl_blk->item_name_buff[cb.name_idx++] = ch;
+			break;
 
-		curr_state = next_state;
+		case 2:
+			ctrl_blk->item_name_buff[cb.name_idx++] = '\0';
+			break;
+
+		case 3:
+			cb.assign_type = LC_ASSIGN_TYPE_IMMEDIATE;
+			break;
+
+		case 4:
+			cb.assign_type = LC_ASSIGN_TYPE_ADDITION;
+			break;
+
+		case 5:
+			cb.assign_type = LC_ASSIGN_TYPE_CONDITIONAL;
+			break;
+
+		case 10:
+			ctrl_blk->ref_name_buff[cb.ref_name_idx++] = ch;
+			break;
+
+		case 11:
+			ctrl_blk->ref_name_buff[cb.ref_name_idx++] = '\0';
+			cb.ref_item = lc_find_cfg_item(ctrl_blk->ref_name_buff, &ctrl_blk->default_cfg_head);
+			if (cb.ref_item == NULL) {
+				lc_err("ref item[%s] not found\n", ctrl_blk->ref_name_buff);
+				return LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND;
+			}
+
+
+			break;
+
+		
+
+
+
+
+
+		case LC_PARSE_STATE_NORMAL_CFG:
+			return LC_PARSE_RES_OK_NORMAL_CFG;
+
+		case LC_PARSE_STATE_INCLUDE:
+			return LC_PARSE_RES_OK_INCLUDE;
+
+		case LC_PARSE_STATE_DEPEND_CFG:
+			return LC_PARSE_RES_OK_DEPEND_CFG;
+		}
+
+		cb.curr_state = cb.next_state;
 		ch = ctrl_blk->line_buff[i++];
 		ctrl_blk->colu_num++;
 	}
 
-	return LC_PASER_RES_OK_NORMAL_CFG;
+	return - cb.next_state - 1;
 }

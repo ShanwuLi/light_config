@@ -5,13 +5,15 @@
 #include <stdint.h>
 
 #define LC_DEBUG
-#define LC_LINE_BUFF_SIZE                  (2048)
+#define LC_LINE_BUFF_SIZE_MIN              (4096)
+#define LC_LINE_BUFF_SIZE_MAX              (8192)
 #define LC_LINE_BUFFS_GAP                  (16)
 #define LC_MEM_UPLIMIT                     (128 * 1024 * 1024)
 
 enum lc_parse_res {
 	/* error code */
 	LC_PARSE_RES_ERR_CTRL_BLK_INVALID = -99,
+	LC_PARSE_RES_ERR_CFG_TYPE_INVALID,
 	LC_PARSE_RES_ERR_CFG_ITEM_INVALID,
 	LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND,
 	LC_PARSE_RES_ERR_INCLUDE_INVALID,
@@ -23,16 +25,21 @@ enum lc_parse_res {
 	LC_PARSE_RES_ERR_NORMAL_CFG_INVALID,
 	LC_PASER_RES_ERR_FILE_NOT_FOUND,
 	/* ok code */
-	LC_PASER_RES_OK_DEPEND_CFG = 0,
-	LC_PASER_RES_OK_NORMAL_CFG,
-	LC_PASER_RES_OK_INCLUDE,
+	LC_PARSE_RES_OK_DEPEND_CFG = 0,
+	LC_PARSE_RES_OK_NORMAL_CFG,
+	LC_PARSE_RES_OK_INCLUDE,
 };
 
 enum lc_assign_type {
-	LC_ASSIGN_TYPE_DIRECT,       /*  = */
+	LC_ASSIGN_TYPE_DIRECT = 0,   /*  = */
 	LC_ASSIGN_TYPE_IMMEDIATE,    /* := */
 	LC_ASSIGN_TYPE_CONDITIONAL,  /* ?= */
 	LC_ASSIGN_TYPE_ADDITION,     /* += */
+};
+
+enum lc_cfg_type {
+	LC_CFG_TYPE_DEFAULT = 0,
+	LC_CFG_TYPE_MENU,
 };
 
 struct lc_list_node {
@@ -131,5 +138,14 @@ char *light_config_get_inc_file_path(struct lc_ctrl_blk *ctrl_blk);
  * @return parse result.
  ************************************************************************************/
 int light_config_parse_line(struct lc_ctrl_blk *ctrl_blk);
+
+/*************************************************************************************
+ * @brief: free memory.
+ *
+ * @ctrl_blk: control block.
+ *
+ * @return: cfg_item.
+ ************************************************************************************/
+void light_config_free(struct lc_ctrl_blk *ctrl_blk);
 
 #endif

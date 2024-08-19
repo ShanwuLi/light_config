@@ -302,7 +302,7 @@ int light_config_parse_state_get_next(int current_state, char ch)
 		break;
 
 	case 204:
-		if (ch == ')')
+		if (ch == '(')
 			return 7000; /* menu */
 		break;
 
@@ -401,7 +401,7 @@ int light_config_parse_state_get_next(int current_state, char ch)
 		break;
 
 	case 224:
-		if (ch == ')')
+		if (ch == '(')
 			return 7000; /* range */
 		break;
 

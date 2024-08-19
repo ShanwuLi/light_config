@@ -10,10 +10,10 @@ int lm_read_default_cfg(struct lc_ctrl_blk *cb, char *cfg_file)
 	int ret;
 	char *pch;
 	FILE *fp;
+	int str_len = 0;
 	static int line_num = 0;
 
 	num_of_parse_calls++;
-	printf("+++++++++++++++++++++++++++++++++++++++num_of_parse_calls:%d\n", num_of_parse_calls);
 	if (num_of_parse_calls > 1000)
 		return -1000;
 
@@ -28,42 +28,58 @@ int lm_read_default_cfg(struct lc_ctrl_blk *cb, char *cfg_file)
 	}
 
 	line_num = 0;
-	while (pch = fgets(cb->line_buff, 2048, fp)) {
+	while (pch = fgets(cb->line_buff + str_len, cb->line_buff_size - (str_len + 2), fp)) {
 		line_num++;
+
+		str_len = strlen(cb->line_buff);
+		if (str_len >= cb->line_buff_size) {
+			printf("line[%d] is too long, please check it\n", line_num);
+			return -1;
+		}
 
 		/* skip comment line and empty line */
 		if (cb->line_buff[0] == '#' || cb->line_buff[0] == '\n') {
 			memset(cb->line_buff, 0, strlen(cb->line_buff) + 1);
+			str_len = 0;
 			continue;
 		}
 
-		ret = light_config_parse_line(cb);
-		if (ret != LC_PASER_RES_OK_INCLUDE && ret != LC_PASER_RES_OK_DEPEND_CFG && ret != LC_PASER_RES_OK_NORMAL_CFG) {
-			printf("Fail to parse %s default cfg line %d, col[%d], ret:%d\n", cfg_file, line_num, cb->colu_num, ret);
-			goto out;
+		if (cb->line_buff[str_len - 2] == '\\') {
+			str_len -= 2;
+			continue;
 		}
 
-		if (ret == LC_PASER_RES_OK_INCLUDE) {
+		printf("line_size:%d, line:%s\n", str_len, cb->line_buff);
+		ret = light_config_parse_line(cb);
+		if (ret != LC_PARSE_RES_OK_DEPEND_CFG && ret != LC_PARSE_RES_OK_INCLUDE &&
+		    ret != LC_PARSE_RES_OK_NORMAL_CFG) {
+			printf("Fail to parse %s default cfg line %d, col[%d], ret:%d\n",
+			        cfg_file, line_num, cb->colu_num, ret);
+			fclose(fp);
+			return ret;
+		}
+
+		if (ret == LC_PARSE_RES_OK_INCLUDE) {
 			printf("parsing subfile:%s\n", cb->inc_file_path);
 			ret = lm_read_default_cfg(cb, cb->inc_file_path);
-			if (ret < 0)
-				goto out;
+			if (ret < 0) {
+				fclose(fp);
+				return ret;
+			}
 		}
+
+		str_len = 0;
 	}
 
-	ret = 0;
-
-out:
 	fclose(fp);
-	return ret;
+	return 0;
 }
 
 int main(int argc, char *argv[])
 {
 	int ret;
 
-
-	ret = light_config_init(&lc_cb, 16 * 1024 * 1024, 2048);
+	ret = light_config_init(&lc_cb, 16 * 1024 * 1024, 8192);
 	printf("ret = %d\n", ret);
 
 	ret = lm_read_default_cfg(&lc_cb, "test.cfg");
