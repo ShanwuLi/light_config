@@ -37,11 +37,6 @@ enum lc_assign_type {
 	LC_ASSIGN_TYPE_ADDITION,     /* += */
 };
 
-enum lc_cfg_type {
-	LC_CFG_TYPE_DEFAULT = 0,
-	LC_CFG_TYPE_MENU,
-};
-
 struct lc_list_node {
 	struct lc_list_node *next;
 	struct lc_list_node *prev;
@@ -131,13 +126,22 @@ char *light_config_get_line_buff(struct lc_ctrl_blk *ctrl_blk);
 char *light_config_get_inc_file_path(struct lc_ctrl_blk *ctrl_blk);
 
 /*************************************************************************************
- * @brief: parse the line.
+ * @brief: parse the line in the default config file.
  * 
  * @ctrl_blk: control block.
  * 
  * @return parse result.
  ************************************************************************************/
-int light_config_parse_line(struct lc_ctrl_blk *ctrl_blk);
+int light_config_parse_default_cfg_line(struct lc_ctrl_blk *ctrl_blk, uint32_t line_num);
+
+/*************************************************************************************
+ * @brief: parse line in the menu config file.
+ * 
+ * @ctrl_blk: control block.
+ * 
+ * @return parse result.
+ ************************************************************************************/
+int light_config_parse_menu_cfg_line(struct lc_ctrl_blk *ctrl_blk);
 
 /*************************************************************************************
  * @brief: free memory.
@@ -147,5 +151,16 @@ int light_config_parse_line(struct lc_ctrl_blk *ctrl_blk);
  * @return: cfg_item.
  ************************************************************************************/
 void light_config_free(struct lc_ctrl_blk *ctrl_blk);
+
+/*************************************************************************************
+ * @brief: find a cfg item.
+ *
+ * @name: name.
+ * @cfg_head: head of the list of the item.
+ *
+ * @return: cfg_item.
+ ************************************************************************************/
+void lc_dump_cfg(struct lc_list_node *cfg_head);
+
 
 #endif

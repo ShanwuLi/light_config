@@ -28,6 +28,7 @@ int lm_read_default_cfg(struct lc_ctrl_blk *cb, char *cfg_file)
 	}
 
 	line_num = 0;
+	memcpy(cb->inc_file_path, cfg_file, strlen(cfg_file) + 1);
 	while (pch = fgets(cb->line_buff + str_len, cb->line_buff_size - (str_len + 2), fp)) {
 		line_num++;
 
@@ -49,8 +50,12 @@ int lm_read_default_cfg(struct lc_ctrl_blk *cb, char *cfg_file)
 			continue;
 		}
 
-		printf("line_size:%d, line:%s\n", str_len, cb->line_buff);
-		ret = light_config_parse_line(cb);
+		ret = light_config_parse_default_cfg_line(cb, line_num);
+		if (ret < 0) {
+			fclose(fp);
+			return ret;
+		}
+
 		if (ret != LC_PARSE_RES_OK_DEPEND_CFG && ret != LC_PARSE_RES_OK_INCLUDE &&
 		    ret != LC_PARSE_RES_OK_NORMAL_CFG) {
 			printf("Fail to parse %s default cfg line %d, col[%d], ret:%d\n",
@@ -61,6 +66,7 @@ int lm_read_default_cfg(struct lc_ctrl_blk *cb, char *cfg_file)
 
 		if (ret == LC_PARSE_RES_OK_INCLUDE) {
 			printf("parsing subfile:%s\n", cb->inc_file_path);
+			num_of_parse_calls++;
 			ret = lm_read_default_cfg(cb, cb->inc_file_path);
 			if (ret < 0) {
 				fclose(fp);
@@ -82,7 +88,8 @@ int main(int argc, char *argv[])
 	ret = light_config_init(&lc_cb, 16 * 1024 * 1024, 8192);
 	printf("ret = %d\n", ret);
 
-	ret = lm_read_default_cfg(&lc_cb, "test.cfg");
+	ret = lm_read_default_cfg(&lc_cb, "test_default.cfg");
 	printf("ret:%d\n", ret);
+	lc_dump_cfg(&lc_cb.default_cfg_head);
 	return 0;
 }

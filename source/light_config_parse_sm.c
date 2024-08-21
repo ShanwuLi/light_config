@@ -483,6 +483,8 @@ int light_config_parse_state_get_next(int current_state, char ch)
 			return 7054;
 		if (ch == '<')
 			return 7055;
+		if (ch == '\n')
+			return LC_PARSE_STATE_DEPEND_CFG;
 		break;
 
 	case 7054:

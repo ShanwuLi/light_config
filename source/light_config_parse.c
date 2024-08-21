@@ -6,6 +6,9 @@
 #include "light_config_parse.h"
 #include "light_config_parse_sm.h"
 
+#if (LC_LINE_BUFFS_GAP < 16)
+	#error buffer gap is too small, it mustn't smaller than 16.
+#endif
 
 #define container_of(ptr, struct_type, member) \
 	((struct_type *)((char *)(ptr) - (char *)(&(((struct_type *)0)->member))))
@@ -49,11 +52,11 @@ struct lc_parse_ctrl_blk {
 	int char_idx;
 	int name_idx;
 	int value_idx;
+	int path_idx;
 	int ref_name_idx;
 	int curr_state;
 	int next_state;
 	uint32_t assign_type;
-	struct lc_cfg_item *ref_item;
 };
 
 /*************************************************************************************
@@ -123,7 +126,7 @@ static void lc_list_add_node_at_tail(struct lc_list_node *head, struct lc_list_n
  *
  * @return: cfg_item.
  ************************************************************************************/
-static void lc_dump_cfg(struct lc_list_node *cfg_head)
+void lc_dump_cfg(struct lc_list_node *cfg_head)
 {
 	struct lc_cfg_item *pos;
 
@@ -295,7 +298,7 @@ static int lc_add_cfg_item(struct lc_ctrl_blk *ctrl_blk, struct lc_list_node *cf
 		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 	}
 
-	mem_size = sizeof(struct lc_cfg_item) + name_len + value_len + 4 * sizeof(uint32_t);
+	mem_size = sizeof(struct lc_cfg_item) + name_len + value_len + 4 * LC_LINE_BUFFS_GAP;
 	cfg_item = malloc(mem_size);
 	if (cfg_item == NULL) {
 		lc_err("no mem to allocate cfg item\n");
@@ -308,17 +311,20 @@ static int lc_add_cfg_item(struct lc_ctrl_blk *ctrl_blk, struct lc_list_node *cf
 		return LC_PARSE_RES_ERR_MEMORY_OVERFLOW;
 	}
 
-	cfg_item->name = (char *)cfg_item + sizeof(struct lc_cfg_item) + sizeof(uint32_t);
-	cfg_item->value = cfg_item->name + name_len + sizeof(uint32_t);
+	if ((value[value_len - 1] == 'n') && (value_len == 1))
+		enable = false;
+
+	cfg_item->name = (char *)cfg_item + sizeof(struct lc_cfg_item) + LC_LINE_BUFFS_GAP;
 	cfg_item->name_len = name_len;
+	cfg_item->value = cfg_item->name + name_len + LC_LINE_BUFFS_GAP;
 	cfg_item->value_len = value_len;
 	cfg_item->name_hashval = lc_bkdr_hash(name);
 	cfg_item->assign_type = assign_type;
 	cfg_item->enable = enable;
 	memcpy(cfg_item->name, name, name_len);
 	memcpy(cfg_item->value, value, value_len);
-	cfg_item->name[name_len - 1] = '\0';
-	cfg_item->value[value_len - 1] = '\0';
+	cfg_item->name[name_len] = '\0';
+	cfg_item->value[value_len] = '\0';
 	lc_list_add_node_at_tail(cfg_head, &cfg_item->node);
 
 	return 0;
@@ -365,15 +371,14 @@ int light_config_init(struct lc_ctrl_blk *ctrl_blk, uint32_t mem_uplimit,
 		return LC_PASER_RES_ERR_FILE_NOT_FOUND;
 
 	/* add top directory cfg item (LC_TOPDIR = "./xxx") to default cfg list */
-	ret = lc_add_cfg_item(ctrl_blk, &ctrl_blk->default_cfg_head, "LC_TOPDIR", 10,
-	                      ctrl_blk->temp_buff, strlen(ctrl_blk->temp_buff) + 1,
+	ret = lc_add_cfg_item(ctrl_blk, &ctrl_blk->default_cfg_head, "LC_TOPDIR", 9,
+	                      ctrl_blk->temp_buff, strlen(ctrl_blk->temp_buff),
 	                      LC_ASSIGN_TYPE_DIRECT, true);
 	if (ret < 0) {
 		lc_err("LC_TOPDIR item add fail\n");
 		return ret;
 	}
 
-	lc_dump_cfg(&ctrl_blk->default_cfg_head);
 	return 0;
 }
 
@@ -411,13 +416,41 @@ static bool lc_parse_options_match(struct lc_ctrl_blk *ctrl_blk,
 }
 
 /*************************************************************************************
+ * @brief: find the cfg item, if found, copy the value to dst.
+ * 
+ * @ctrl_blk: control block.
+ * @cfg_head: cfg list head.
+ * @dst: destination buffer.
+ * @item_name: item name.
+ * 
+ * @return 0 on success, negative value if failure.
+ ************************************************************************************/
+static int lc_find_cfg_item_and_cpy_val(struct lc_ctrl_blk *ctrl_blk, uint32_t line_num,
+                              struct lc_list_node *cfg_head, char *dst, char *item_name)
+{
+	struct lc_cfg_item *ref_item;
+
+	ref_item = lc_find_cfg_item(item_name, cfg_head);
+	if (ref_item == NULL) {
+		lc_err("ref item[%s] not found in line[%d], column[%d]\n",
+		        item_name, line_num, ctrl_blk->colu_num);
+		return LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND;
+	}
+
+	memcpy(dst, ref_item->value, ref_item->value_len);
+	dst[ref_item->value_len] = '\0';
+
+	return ref_item->value_len;
+}
+
+/*************************************************************************************
  * @brief: parse the line.
  * 
  * @ctrl_blk: control block.
  * 
  * @return parse result.
  ************************************************************************************/
-int light_config_parse_line(struct lc_ctrl_blk *ctrl_blk, uint32_t cfg_type)
+int light_config_parse_default_cfg_line(struct lc_ctrl_blk *ctrl_blk, uint32_t line_num)
 {
 	int ret;
 	char ch;
@@ -429,13 +462,9 @@ int light_config_parse_line(struct lc_ctrl_blk *ctrl_blk, uint32_t cfg_type)
 		return LC_PARSE_RES_ERR_CTRL_BLK_INVALID;
 	}
 
-	if ((cfg_type != LC_CFG_TYPE_DEFAULT) && (cfg_type != LC_CFG_TYPE_MENU)) {
-		lc_err("cfg_type[%d] is invalid\n", cfg_type);
-		return LC_PARSE_RES_ERR_CFG_TYPE_INVALID;
-	}
-
 	/* initialize parse control block */
-	memset(&cb, 0, sizeof(cb));
+	memset(&cb, 0, sizeof(struct lc_parse_ctrl_blk));
+	cb.item_en = true;
 	cb.assign_type = LC_ASSIGN_TYPE_DIRECT;
 	ch = ctrl_blk->line_buff[cb.char_idx++];
 	ctrl_blk->colu_num = 0;
@@ -453,7 +482,7 @@ int light_config_parse_line(struct lc_ctrl_blk *ctrl_blk, uint32_t cfg_type)
 			break;
 
 		case 2:
-			ctrl_blk->item_name_buff[cb.name_idx++] = '\0';
+			ctrl_blk->item_name_buff[cb.name_idx] = '\0';
 			break;
 
 		case 3:
@@ -468,41 +497,89 @@ int light_config_parse_line(struct lc_ctrl_blk *ctrl_blk, uint32_t cfg_type)
 			cb.assign_type = LC_ASSIGN_TYPE_CONDITIONAL;
 			break;
 
-		case 10:
+		case 22:
+			ctrl_blk->inc_file_path[cb.path_idx++] = ch;
+			break;
+
+		case 23:
+			ctrl_blk->inc_file_path[cb.path_idx] = '\0';
+			break;
+		
+		case 24:
+			cb.ref_name_idx = 0;
+			break;
+
+		case 25:
 			ctrl_blk->ref_name_buff[cb.ref_name_idx++] = ch;
 			break;
 
-		case 11:
-			ctrl_blk->ref_name_buff[cb.ref_name_idx++] = '\0';
-			cb.ref_item = lc_find_cfg_item(ctrl_blk->ref_name_buff, &ctrl_blk->default_cfg_head);
-			if (cb.ref_item == NULL) {
-				lc_err("ref item[%s] not found\n", ctrl_blk->ref_name_buff);
-				return LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND;
-			}
-
-
+		case 26:
+			ctrl_blk->ref_name_buff[cb.ref_name_idx] = '\0';
+			ret = lc_find_cfg_item_and_cpy_val(ctrl_blk, line_num, &ctrl_blk->default_cfg_head,
+			                   ctrl_blk->inc_file_path + cb.path_idx, ctrl_blk->ref_name_buff);
+			if (ret < 0)
+				return ret;
+			cb.path_idx += ret;
 			break;
 
-		
+		case 8000:
+			ctrl_blk->item_value_buff[cb.value_idx++] = ch;
+			cb.ref_name_idx = 0;
+			break;
 
+		case 8001:
+			cb.ref_name_idx = 0;
+			break;
 
+		case 8002:
+			ctrl_blk->ref_name_buff[cb.ref_name_idx++] = ch;
+			break;
 
-
-
-		case LC_PARSE_STATE_NORMAL_CFG:
-			return LC_PARSE_RES_OK_NORMAL_CFG;
-
-		case LC_PARSE_STATE_INCLUDE:
-			return LC_PARSE_RES_OK_INCLUDE;
+		case 8003:
+			ctrl_blk->ref_name_buff[cb.ref_name_idx] = '\0';
+			ret = lc_find_cfg_item_and_cpy_val(ctrl_blk, line_num, &ctrl_blk->default_cfg_head,
+			                ctrl_blk->item_value_buff + cb.value_idx, ctrl_blk->ref_name_buff);
+			if (ret < 0)
+				return ret;
+			cb.value_idx += ret;
+			break;
 
 		case LC_PARSE_STATE_DEPEND_CFG:
-			return LC_PARSE_RES_OK_DEPEND_CFG;
+			lc_err("Don't use menu cfg in default cfg file[%s], line[%d], colum[%d]\n",
+			       ctrl_blk->inc_file_path, line_num, ctrl_blk->colu_num);
+			break;
+
+		case LC_PARSE_STATE_INCLUDE:
+			lc_info("path:%s\n", ctrl_blk->inc_file_path);
+			return LC_PARSE_RES_OK_INCLUDE;
+
+		case LC_PARSE_STATE_NORMAL_CFG:
+			ctrl_blk->item_value_buff[cb.value_idx] = '\0';
+			ret = lc_add_cfg_item(ctrl_blk, &ctrl_blk->default_cfg_head,
+			                      ctrl_blk->item_name_buff, cb.name_idx,
+			                      ctrl_blk->item_value_buff, cb.value_idx,
+			                      cb.assign_type, cb.item_en);
+			return LC_PARSE_RES_OK_NORMAL_CFG;
 		}
 
 		cb.curr_state = cb.next_state;
-		ch = ctrl_blk->line_buff[i++];
+		ch = ctrl_blk->line_buff[cb.char_idx++];
 		ctrl_blk->colu_num++;
 	}
 
 	return - cb.next_state - 1;
 }
+
+/*************************************************************************************
+ * @brief: parse line in the menu config file.
+ * 
+ * @ctrl_blk: control block.
+ * 
+ * @return parse result.
+ ************************************************************************************/
+int light_config_parse_menu_cfg_line(struct lc_ctrl_blk *ctrl_blk)
+{
+
+}
+
+
