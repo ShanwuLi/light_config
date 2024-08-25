@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 	timeinfo = localtime(&rawtime);
 	printf("start: %s", asctime(timeinfo));
 
-	ret = light_config_init(&lc_cb, 128 * 1024 * 1024, 8192, 16, 16 * 1024 * 1024);
+	ret = light_config_init(&lc_cb, 128 * 1024 * 1024, 8192, 10240, 16 * 1024 * 1024);
 	printf("ret = %d\n", ret);
 
 	ret = light_config_parse_cfg_file(&lc_cb, "test_default.cfg", true);

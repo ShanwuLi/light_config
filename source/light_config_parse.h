@@ -1,11 +1,12 @@
 #ifndef __LIGHT_CONFIG_H__
 #define __LIGHT_CONFIG_H__
 
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 
 //#define LC_DEBUG
-#define LC_INC_FILES_NUM_MAX               (10240)
+#define LC_INC_FILES_NUM_MAX               (102400)
 #define LC_CFG_ITEMS_CACHE_LINE_NUM        (512)
 #define LC_LINE_BUFF_SIZE_MIN              (4096)
 #define LC_LINE_BUFF_SIZE_MAX              (8192)
@@ -66,6 +67,18 @@ struct lc_cfg_list {
 	struct lc_list_node node;
 };
 
+struct lc_cfg_file_item {
+	char *file_name;
+	fpos_t position;
+	int line_num;
+};
+
+struct lc_cfg_file_stk {
+	ssize_t depth;
+	ssize_t sp;
+	struct lc_cfg_file_item *item_stk;
+};
+
 struct lc_mem_blk_ctrl {
 	size_t uplimit;
 	size_t used;
@@ -80,6 +93,8 @@ struct lc_mem_blk {
 	void *buff;
 	struct lc_list_node node;
 };
+
+#define lc_exit(ret)            exit(ret)
 
 /*************************************************************************************
  * @brief: control block of the config file.
@@ -101,12 +116,11 @@ struct lc_mem_blk {
  * @cfg_file_name_stk: memory of the file name stack.
  ************************************************************************************/
 struct lc_ctrl_blk {
-	size_t inc_files_num;
 	size_t line_buff_size;
 	size_t line_num;
 	size_t colu_num;
-	char *file_name;
 	char *line_buff;
+	char *file_name_buff;
 	char *inc_path_buff;
 	char *item_name_buff;
 	char *item_value_buff;
@@ -117,7 +131,7 @@ struct lc_ctrl_blk {
 	struct lc_cfg_list menu_cfg_head;
 	struct lc_cfg_list default_cfg_head;
 	struct lc_mem_blk_ctrl mem_blk_ctrl;
-	struct lc_mem_blk_ctrl cfg_file_name_stk;
+	struct lc_cfg_file_stk cfg_file_stk;
 };
 
 /*************************************************************************************
@@ -130,19 +144,17 @@ struct lc_ctrl_blk {
  * @return: cfg_item.
  ************************************************************************************/
 int light_config_init(struct lc_ctrl_blk *ctrl_blk, size_t mem_uplimit,
-                      size_t line_buff_size, size_t cfg_file_name_stk_size,
-                      size_t each_mem_blk_szie);
+                      size_t line_buff_size, size_t cfg_file_num_max,
+                      size_t each_mem_blk_size);
 
 /*************************************************************************************
- * @brief: parse the subfile.
+ * @brief: parse the config file.
  * 
- * @cb: control block.
- * @fp: file pointer.
- * @pos: position of the file.
- * @restore_cfg_file: the name of the file name that need restore.
+ * @ctrl_blk: control block.
+ * @cfg_file: config file name.
  * @is_default_cfg: whether the subfile is default config file.
  * 
- * @return parse result.
+ * @return zero on success, otherwise on failure.
  ************************************************************************************/
 int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
                                                          bool is_default_cfg);

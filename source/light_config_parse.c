@@ -129,10 +129,69 @@ static void lc_list_add_node_at_tail(struct lc_list_node *head, struct lc_list_n
 }
 
 /*************************************************************************************
+ * @brief: push a cfg file to the stack.
+ * 
+ * @param cfg_file_stk: cfg file stack.
+ * @param item: item of the cfg file.
+ * @return: zero on success, other on failure.
+ ************************************************************************************/
+static int lc_cfg_file_push(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_file_item *item)
+{
+	void *name;
+	struct lc_cfg_file_stk *stk = &(ctrl_blk->cfg_file_stk);
+
+	if (stk->sp >= stk->depth) {
+		lc_err("cfg file num[%lld] overflow[%lld]\n", stk->sp, stk->depth);
+		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
+	}
+	
+	name = malloc(strlen(item->file_name) + 1);
+	if (name == NULL) {
+		lc_err("malloc failed\n");
+		return LC_PARSE_RES_ERR_MEMORY_FAULT;
+	}
+
+	memcpy(name, item->file_name, strlen(item->file_name) + 1);
+	stk->item_stk[stk->sp].file_name = name;
+	stk->item_stk[stk->sp].line_num = item->line_num;
+	stk->item_stk[stk->sp].position = item->position;
+	stk->sp++;
+
+	return 0;
+}
+
+/*************************************************************************************
+ * @brief: push a cfg file to the stack.
+ * 
+ * @param cfg_file_stk: cfg file stack.
+ * @param item: item of the cfg file.
+ * @return: zero on success, other on failure.
+ ************************************************************************************/
+static int lc_cfg_file_pop(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_file_item *item)
+{
+	void *name;
+	struct lc_cfg_file_stk *stk = &(ctrl_blk->cfg_file_stk);
+
+	if (stk->sp < 0) {
+		lc_err("cfg file num[%lld] overflow\n", stk->sp);
+		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
+	}
+
+	stk->sp--;
+	name = stk->item_stk[stk->sp].file_name;
+	memcpy(ctrl_blk->file_name_buff, name, strlen(name) + 1);
+	item->file_name = ctrl_blk->file_name_buff;
+	item->line_num = stk->item_stk[stk->sp].line_num;
+	item->position = stk->item_stk[stk->sp].position;
+	free(name);
+	return 0;
+}
+
+/*************************************************************************************
  * @brief: dump a cfg list.
  *
- * @name: name.
- * @cfg_head: head of the list of the item.
+ * @param name: name.
+ * @param cfg_head: head of the list of the item.
  *
  * @return: void.
  ************************************************************************************/
@@ -153,7 +212,7 @@ void lc_dump_cfg(struct lc_cfg_list *cfg_head)
 /*************************************************************************************
  * @brief: free memory.
  *
- * @ctrl_blk: control block.
+ * @param ctrl_blk: control block.
  *
  * @return: cfg_item.
  ************************************************************************************/
@@ -174,8 +233,8 @@ void light_config_free(struct lc_ctrl_blk *ctrl_blk)
 /*************************************************************************************
  * @brief: update cache of cfg list.
  *
- * @cfg_head: head of the list of the item.
- * @item: cfg item.
+ * @param cfg_head: head of the list of the item.
+ * @param item: cfg item.
  *
  * @return: void.
  ************************************************************************************/
@@ -201,8 +260,8 @@ static void lc_cfg_list_update_cache(struct lc_cfg_list *cfg_head, struct lc_cfg
 /*************************************************************************************
  * @brief: find a cfg item.
  *
- * @cfg_head: head of the list of the item.
- * @name: name.
+ * @param cfg_head: head of the list of the item.
+ * @param name: name.
  *
  * @return: cfg_item.
  ************************************************************************************/
@@ -244,24 +303,24 @@ static struct lc_cfg_item *lc_find_cfg_item(struct lc_cfg_list *cfg_head, char *
 /*************************************************************************************
  * @brief: init lc control block.
  *
- * @ctrl_blk: control block.
- * @line_buff_size: size of the line buff.
- * @mem_uplimit: memory uplimit, if over the memory uplimit, return error.
- * @each_mem_blk_size: size of each memory block.
- * @cfg_file_name_stk_size: size of the stack of the file name.
- *   
+ * @param ctrl_blk: control block.
+ * @param line_buff_size: size of the line buff.
+ * @param mem_uplimit: memory uplimit, if over the memory uplimit, return error.
+ * @param each_mem_blk_size: size of each memory block.
+ * @param cfg_file_num_max: max number of include files.
+ * @param cfg_file_stk: include file stack.
+ * 
  * @return: void.
  ************************************************************************************/
 static void lc_cb_init(struct lc_ctrl_blk *ctrl_blk, size_t line_buff_size,
-                       size_t cfg_file_name_stk_size, size_t mem_uplimit,
-                       size_t each_mem_blk_size)
+                       size_t mem_uplimit, size_t each_mem_blk_size,
+                       size_t cfg_file_num_max, void *cfg_file_stk)
 {
-	ctrl_blk->inc_files_num = 0;
 	ctrl_blk->line_buff_size = line_buff_size;
 	ctrl_blk->colu_num = 0;
-	ctrl_blk->file_name = NULL;
 	ctrl_blk->line_buff = ctrl_blk->buff_pool;
-	ctrl_blk->inc_path_buff = ctrl_blk->line_buff + line_buff_size;
+	ctrl_blk->file_name_buff = ctrl_blk->line_buff + line_buff_size;
+	ctrl_blk->inc_path_buff = ctrl_blk->file_name_buff + line_buff_size;
 	ctrl_blk->item_name_buff = ctrl_blk->inc_path_buff + line_buff_size;
 	ctrl_blk->item_value_buff = ctrl_blk->item_name_buff + line_buff_size;
 	ctrl_blk->logic_expr_buff = ctrl_blk->item_value_buff + line_buff_size;
@@ -275,19 +334,15 @@ static void lc_cb_init(struct lc_ctrl_blk *ctrl_blk, size_t line_buff_size,
 	ctrl_blk->mem_blk_ctrl.curr_blk_rest = 0;
 	ctrl_blk->mem_blk_ctrl.ptr = NULL;
 
-	ctrl_blk->cfg_file_name_stk.uplimit = cfg_file_name_stk_size;
-	ctrl_blk->cfg_file_name_stk.used = 0;
-	ctrl_blk->cfg_file_name_stk.each_blk_size = cfg_file_name_stk_size;
-	ctrl_blk->cfg_file_name_stk.curr_blk_size = cfg_file_name_stk_size;
-	ctrl_blk->cfg_file_name_stk.curr_blk_rest = cfg_file_name_stk_size;
-	ctrl_blk->cfg_file_name_stk.ptr = ctrl_blk->temp_buff + 2 * line_buff_size;
+	ctrl_blk->cfg_file_stk.depth = cfg_file_num_max + 8;
+	ctrl_blk->cfg_file_stk.sp = 0;
+	ctrl_blk->cfg_file_stk.item_stk = cfg_file_stk;
 
 	ctrl_blk->default_cfg_head.name = "default config";
 	ctrl_blk->menu_cfg_head.name = "menu config";
 	lc_list_init(&ctrl_blk->menu_cfg_head.node);
 	lc_list_init(&ctrl_blk->default_cfg_head.node);
 	lc_list_init(&ctrl_blk->mem_blk_ctrl.node);
-	lc_list_init(&ctrl_blk->cfg_file_name_stk.node);
 	memset(&(ctrl_blk->menu_cfg_head.cache), 0, sizeof(struct lc_cfg_item_cache));
 	memset(&(ctrl_blk->default_cfg_head.cache), 0, sizeof(struct lc_cfg_item_cache));
 }
@@ -295,8 +350,8 @@ static void lc_cb_init(struct lc_ctrl_blk *ctrl_blk, size_t line_buff_size,
 /*************************************************************************************
  * @brief: allocate memory for cfg item.
  *
- * @ctrl_blk: control block.
- * @size: size of memory.
+ * @param ctrl_blk: control block.
+ * @param size: size of memory.
  * 
  * @return: pointer to allocated memory.
  ************************************************************************************/
@@ -332,12 +387,12 @@ static void *lc_malloc(struct lc_ctrl_blk *ctrl_blk, int size)
 /*************************************************************************************
  * @brief: add cfg item to list.
  *
- * @ctrl_blk: control block.
- * @cfg_head: head of the list of the item.
- * @name: name, eg: TEST.
- * @value: value, eg: TEST = item value.
- * @assign_type: assign type, eg: =, +=, ?= , :=.
- * @enable: enable, if true, the item is enable, else disable.
+ * @param ctrl_blk: control block.
+ * @param cfg_head: head of the list of the item.
+ * @param name: name, eg: TEST.
+ * @param value: value, eg: TEST = item value.
+ * @param assign_type: assign type, eg: =, +=, ?= , :=.
+ * @param enable: enable, if true, the item is enable, else disable.
  * 
  * @return: void.
  ************************************************************************************/
@@ -386,11 +441,9 @@ static int lc_add_cfg_item(struct lc_ctrl_blk *ctrl_blk, struct lc_list_node *cf
 }
 
 /*************************************************************************************
- * @brief: init .
+ * @brief: init cfg items.
  *
- * @ctrl_blk: control block.
- * @mem_uplimit: memory upper limit.
- * @line_buff_size: line buffer size.
+ * @param ctrl_blk: control block.
  *
  * @return: cfg_item.
  ************************************************************************************/
@@ -430,19 +483,20 @@ static int lc_cfg_items_init(struct lc_ctrl_blk *ctrl_blk)
 /*************************************************************************************
  * @brief: init .
  *
- * @ctrl_blk: control block.
- * @mem_uplimit: memory upper limit.
- * @line_buff_size: line buffer size.
+ * @param ctrl_blk: control block.
+ * @param mem_uplimit: memory upper limit.
+ * @param line_buff_size: line buffer size.
+ * @param cfg_file_num_max: max number of cfg files.
+ * @param each_mem_blk_size: each memory block size.
  *
  * @return: cfg_item.
  ************************************************************************************/
 int light_config_init(struct lc_ctrl_blk *ctrl_blk, size_t mem_uplimit,
-                      size_t line_buff_size, size_t cfg_file_name_stk_size,
-                      size_t each_mem_blk_szie)
+                      size_t line_buff_size, size_t cfg_file_num_max,
+                      size_t each_mem_blk_size)
 {
 	int ret;
 	size_t mem_size;
-	void *file_name_stk_buff;
 
 	if (ctrl_blk == NULL) {
 		lc_err("ctrl_blk is NULL\n");
@@ -457,7 +511,7 @@ int light_config_init(struct lc_ctrl_blk *ctrl_blk, size_t mem_uplimit,
 		return LC_PARSE_RES_ERR_LINE_BUFF_OVERFLOW;
 	}
 
-	mem_size = line_buff_size * 8 + cfg_file_name_stk_size;
+	mem_size = line_buff_size * 8 + cfg_file_num_max * sizeof(struct lc_cfg_file_item);
 	printf("mem_size[%llu]\n", mem_size);
 	ctrl_blk->buff_pool = malloc(mem_size);
 	if (ctrl_blk->buff_pool == NULL) {
@@ -466,8 +520,8 @@ int light_config_init(struct lc_ctrl_blk *ctrl_blk, size_t mem_uplimit,
 	}
 
 	/* initialize ctrl_blk */
-	lc_cb_init(ctrl_blk, line_buff_size, cfg_file_name_stk_size,
-	           mem_uplimit, each_mem_blk_szie);
+	lc_cb_init(ctrl_blk, line_buff_size, mem_uplimit, each_mem_blk_size,
+	         cfg_file_num_max, ctrl_blk->buff_pool + line_buff_size * 8);
 
 	ret = lc_cfg_items_init(ctrl_blk);
 	if (ret < 0) {
@@ -482,9 +536,9 @@ int light_config_init(struct lc_ctrl_blk *ctrl_blk, size_t mem_uplimit,
 /*************************************************************************************
  * @brief: parse select function.
  *
- * @ctrl_blk: control block.
- * @pcb: parse control block.
- * @ch: char.
+ * @param ctrl_blk: control block.
+ * @param pcb: parse control block.
+ * @param ch: char.
  *
  * @return: zero on success, else error code.
  ************************************************************************************/
@@ -502,9 +556,9 @@ static int lc_parsing_func_select(struct lc_ctrl_blk *ctrl_blk,
 /*************************************************************************************
  * @brief: parse menu function.
  *
- * @ctrl_blk: control block.
- * @pcb: parse control block.
- * @ch: char.
+ * @param ctrl_blk: control block.
+ * @param pcb: parse control block.
+ * @param ch: char.
  *
  * @return: zero on success, else error code.
  ************************************************************************************/
@@ -529,9 +583,9 @@ static int lc_parsing_func_menu(struct lc_ctrl_blk *ctrl_blk,
 /*************************************************************************************
  * @brief: parse select terminal function.
  *
- * @ctrl_blk: control block.
- * @cb: parse control block.
- * @ch: char.
+ * @param ctrl_blk: control block.
+ * @param cb: parse control block.
+ * @param ch: char.
  *
  * @return: zero on success, else error code.
  ************************************************************************************/
@@ -556,9 +610,9 @@ static int lc_parse_terminal_func_select(struct lc_ctrl_blk *ctrl_blk,
 /*************************************************************************************
  * @brief: parse menu terminal function.
  *
- * @ctrl_blk: control block.
- * @pcb: parse control block.
- * @ch: char.
+ * @param ctrl_blk: control block.
+ * @param pcb: parse control block.
+ * @param ch: char.
  *
  * @return: zero on success, else error code.
  ************************************************************************************/
@@ -579,10 +633,10 @@ static int lc_parse_terminal_func_menu(struct lc_ctrl_blk *ctrl_blk,
 /*************************************************************************************
  * @brief: find the cfg item, if found, copy the value to dst.
  * 
- * @ctrl_blk: control block.
- * @cfg_head: cfg list head.
- * @dst: destination buffer.
- * @item_name: item name.
+ * @param ctrl_blk: control block.
+ * @param cfg_head: cfg list head.
+ * @param dst: destination buffer.
+ * @param item_name: item name.
  * 
  * @return 0 on success, negative value if failure.
  ************************************************************************************/
@@ -605,10 +659,10 @@ static int lc_find_cfg_item_and_cpy_val(struct lc_ctrl_blk *ctrl_blk,
 /*************************************************************************************
  * @brief: find the cfg item, if found, copy the value to dst.
  * 
- * @ctrl_blk: control block.
- * @cfg_head: cfg list head.
- * @dst: destination buffer.
- * @item_name: item name.
+ * @param ctrl_blk: control block.
+ * @param cfg_head: cfg list head.
+ * @param item_name: item name.
+ * @param en: enable flag we got.
  * 
  * @return 0 on success, negative value if failure.
  ************************************************************************************/
@@ -627,10 +681,11 @@ static int lc_find_cfg_item_and_get_en(struct lc_ctrl_blk *ctrl_blk,
 /*************************************************************************************
  * @brief: parse the line.
  * 
- * @ctrl_blk: control block.
- * @line_num:  line number.
+ * @param ctrl_blk: control block.
+ * @param line_num:  line number.
+ * @param is_default_cfg: is default config file or not(menu_config).
  * 
- * @return parse result.
+ * @param zero on success, negative value on error.
  ************************************************************************************/
 int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
                        size_t line_num, bool is_default_cfg)
@@ -697,8 +752,8 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			                 ctrl_blk->ref_name_buff, &cb.ref_en);
 			if (ret < 0) {
 				lc_err("ref [%s] not found in [%s] line[%llu], col[%llu]\n",
-				               ctrl_blk->ref_name_buff, ctrl_blk->file_name,
-				               line_num, ctrl_blk->colu_num);
+				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
+				          line_num, ctrl_blk->colu_num);
 				return ret;
 			}
 			cb.item_en = cb.item_en && cb.ref_en;
@@ -727,8 +782,8 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			                ctrl_blk->ref_name_buff);
 			if (ret < 0) {
 				lc_err("ref [%s] not found in [%s] line[%llu], col[%llu]\n",
-				               ctrl_blk->ref_name_buff, ctrl_blk->file_name,
-				               line_num, ctrl_blk->colu_num);
+				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
+				          line_num, ctrl_blk->colu_num);
 				return ret;
 			}
 			cb.path_idx += ret;
@@ -759,8 +814,8 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			                              ctrl_blk->ref_name_buff);
 			if (ret < 0) {
 				lc_err("ref [%s] not found in [%s] line[%llu], col[%llu]\n",
-				               ctrl_blk->ref_name_buff, ctrl_blk->file_name,
-				               line_num, ctrl_blk->colu_num);
+				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
+				          line_num, ctrl_blk->colu_num);
 				return ret;
 			}
 			cb.value_idx += ret;
@@ -796,8 +851,8 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			                                ctrl_blk->ref_name_buff, &cb.ref_en);
 			if (ret < 0) {
 				lc_err("ref [%s] not found in [%s] line[%llu], col[%llu]\n",
-				               ctrl_blk->ref_name_buff, ctrl_blk->file_name,
-				               line_num, ctrl_blk->colu_num);
+				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
+				          line_num, ctrl_blk->colu_num);
 				return ret;
 			}
 			break;
@@ -877,8 +932,8 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			                                ctrl_blk->ref_name_buff, &cb.ref_en);
 			if (ret < 0) {
 				lc_err("ref [%s] not found in [%s] line[%llu], col[%llu]\n",
-				               ctrl_blk->ref_name_buff, ctrl_blk->file_name,
-				               line_num, ctrl_blk->colu_num);
+				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
+				          line_num, ctrl_blk->colu_num);
 				return ret;
 			}
 			ctrl_blk->logic_expr_buff[cb.expr_idx++] = (cb.ref_en ? 'y' : 'n');
@@ -904,8 +959,8 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			             ctrl_blk->ref_name_buff);
 			if (ret < 0) {
 				lc_err("ref [%s] not found in [%s] line[%llu], col[%llu]\n",
-				               ctrl_blk->ref_name_buff, ctrl_blk->file_name,
-				               line_num, ctrl_blk->colu_num);
+				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
+				          line_num, ctrl_blk->colu_num);
 				return ret;
 			}
 			cb.value_idx += ret;
@@ -946,66 +1001,15 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 }
 
 /*************************************************************************************
- * @brief: parse the subfile.
+ * @brief: check parameters for parsing the cfg file.
  * 
- * @cb: control block.
- * @fp: file pointer.
- * @pos: position of the file.
- * @restore_cfg_file: the name of the file name that need restore.
- * @is_default_cfg: whether the subfile is default config file.
+ * @param ctrl_blk: control block.
+ * @param cfg_file: cfg file name.
  * 
  * @return parse result.
  ************************************************************************************/
-static int lc_read_subcfg_file(struct lc_ctrl_blk *ctrl_blk, FILE **fp, fpos_t *pos,
-                                        char *restore_cfg_file, bool is_default_cfg)
+static int lc_parse_check_params(struct lc_ctrl_blk *ctrl_blk, char *cfg_file)
 {
-	int ret;
-
-	ret = fgetpos(*fp, pos);
-	if (ret < 0) {
-		lc_err("fgetpos fail, ret:%d\n", ret);
-		return ret;
-	}
-
-	fclose(*fp);
-	ret = light_config_parse_cfg_file(ctrl_blk, ctrl_blk->inc_path_buff, is_default_cfg);
-	if (ret < 0) {
-		*fp = fopen(restore_cfg_file, "r");
-		return ret;
-	}
-
-	*fp = fopen(restore_cfg_file, "r");
-	if (*fp == NULL) {
-		lc_err("Fail to open file %s\n", restore_cfg_file);
-		return LC_PASER_RES_ERR_FILE_NOT_FOUND;
-	}
-
-	ctrl_blk->file_name = restore_cfg_file;
-	ret = fsetpos(*fp, pos);
-	if (ret < 0) {
-		lc_err("fgetpos fail, ret:%d\n", ret);
-		return ret;
-	}
-
-	return 0;
-}
-
-/*************************************************************************************
- * @brief: prepare to parse the cfg file.
- * 
- * @ctrl_blk: control block.
- * @cfg_file: cfg file name.
- * @fp: file pointer.
- * @restore_cfg_file: the name of the file name that need restore.
- * 
- * @return parse result.
- ************************************************************************************/
-static int lc_parse_prepare(struct lc_ctrl_blk *ctrl_blk, char *cfg_file, FILE **fp,
-                                                          char **restore_file_name)
-{
-	if (ctrl_blk->inc_files_num > LC_INC_FILES_NUM_MAX)
-		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
-
 	if (cfg_file == NULL)
 		return LC_PARSE_RES_ERR_MEMORY_FAULT;
 
@@ -1014,71 +1018,48 @@ static int lc_parse_prepare(struct lc_ctrl_blk *ctrl_blk, char *cfg_file, FILE *
 		return LC_PARSE_RES_ERR_LINE_BUFF_OVERFLOW;
 	}
 
-	*fp = fopen(cfg_file, "r");
-	if (*fp == NULL) {
-		lc_err("Fail to open file %s\n", cfg_file);
-		return LC_PASER_RES_ERR_FILE_NOT_FOUND;
-	}
-
-	*restore_file_name = malloc(strlen(cfg_file) + 1);
-	if (*restore_file_name == NULL) {
-		fclose(*fp);
-		lc_err("alloc %llu bytes fail\n", strlen(cfg_file) + 1);
-		return -1;
-	}
-
 	return 0;
-}
-
-/*************************************************************************************
- * @brief: unprepare to parse the cfg file.
- * 
- * @ctrl_blk: control block.
- * @cfg_file: cfg file name.
- * @fp: file pointer.
- * @restore_cfg_file: the name of the file name that need restore.
- * 
- * @return parse result.
- ************************************************************************************/
-static int lc_parse_unprepare(struct lc_ctrl_blk *ctrl_blk, FILE **fp,
-                                             char **restore_file_name)
-{
-	free(*restore_file_name);
-	fclose(*fp);
 }
 
 /*************************************************************************************
  * @brief: parse the subfile.
  * 
- * @cb: control block.
- * @fp: file pointer.
- * @pos: position of the file.
- * @restore_cfg_file: the name of the file name that need restore.
- * @is_default_cfg: whether the subfile is default config file.
+ * @param ctrl_blk: control block.
+ * @param is_default_cfg: whether the subfile is default config file.
+ * @param file_item: file item that need to parse.
  * 
- * @return parse result.
+ * @return zero on success, otherwise on failure.
  ************************************************************************************/
-int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
-                                                         bool is_default_cfg)
+static int lc_parse_cfg_file_with_position(struct lc_ctrl_blk *ctrl_blk, bool is_default_cfg,
+                                                         struct lc_cfg_file_item *file_item)
 {
 	int ret;
 	char *pch;
 	FILE *fp;
-	char *file_name;
-	fpos_t position;
 	size_t str_len = 0;
 	size_t line_num = 0;
+	char *file_name = file_item->file_name;
+	struct lc_cfg_file_item inc_file_item;
 
-	ctrl_blk->inc_files_num++;
-
-	ret = lc_parse_prepare(ctrl_blk, cfg_file, &fp, &file_name);
+	ret = lc_parse_check_params(ctrl_blk, file_name);
 	if (ret < 0) {
-		lc_err("lc_parse_prepare failed, ret:%d\n", ret);
+		lc_err("lc_parse_check_params failed, ret:%d\n", ret);
 		return ret;
 	}
 
-	memcpy(file_name, cfg_file, strlen(cfg_file) + 1);
-	ctrl_blk->file_name = file_name;
+	fp = fopen(file_name, "r");
+	if (fp == NULL) {
+		lc_err("Fail to open file %s\n", file_name);
+		return LC_PASER_RES_ERR_FILE_NOT_FOUND;
+	}
+
+	ret = fsetpos(fp, &file_item->position);
+	if (ret < 0) {
+		lc_err("fgetpos fail, ret:%d\n", ret);
+		goto out;
+	}
+
+	/* parse file line by line */
 	while (pch = fgets(ctrl_blk->line_buff + str_len, ctrl_blk->line_buff_size - (str_len + 2), fp)) {
 		line_num++;
 		str_len = strlen(ctrl_blk->line_buff);
@@ -1099,27 +1080,39 @@ int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
 			continue;
 		}
 
-		lc_info("parseing: %s\n", ctrl_blk->line_buff);
+		lc_info("parsing: %s\n", ctrl_blk->line_buff);
 		ret = light_config_parse_cfg_line(ctrl_blk, line_num, is_default_cfg);
 		if (ret < 0) {
 			lc_err("Fail to parse %s default cfg line %llu, col[%llu], ret:%d\n",
-			        ctrl_blk->file_name, line_num, ctrl_blk->colu_num, ret);
+			        file_name, line_num, ctrl_blk->colu_num, ret);
 			goto out;
 		}
 
 		if (ret != LC_PARSE_RES_OK_DEPEND_CFG && ret != LC_PARSE_RES_OK_INCLUDE &&
 		    ret != LC_PARSE_RES_OK_NORMAL_CFG) {
 			lc_err("Fail to parse %s default cfg line %llu, col[%llu], ret:%d\n",
-			        cfg_file, line_num, ctrl_blk->colu_num, ret);
+			        file_name, line_num, ctrl_blk->colu_num, ret);
 			goto out;
 		}
 
 		if (ret == LC_PARSE_RES_OK_INCLUDE) {
-			lc_info("parsing subfile:%s\n", ctrl_blk->inc_path_buff);
-			ctrl_blk->inc_files_num++;
-			ret = lc_read_subcfg_file(ctrl_blk, &fp, &position, file_name, is_default_cfg);
-			if (ret < 0)
+			file_item->line_num = line_num;
+			file_item->position = ftell(fp);
+			ret = lc_cfg_file_push(ctrl_blk, file_item);
+			if (ret < 0) {
+				lc_err("lc_cfg_file_push failed, ret:%d\n", ret);
 				goto out;
+			}
+
+			inc_file_item.file_name = ctrl_blk->inc_path_buff;
+			inc_file_item.line_num = 0;
+			inc_file_item.position = 0;
+			ret = lc_cfg_file_push(ctrl_blk, &inc_file_item);
+			if (ret < 0) {
+				lc_err("lc_cfg_file_push failed, ret:%d\n", ret);
+				goto out;
+			}
+			goto out;
 		}
 
 		str_len = 0;
@@ -1127,6 +1120,51 @@ int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
 
 	ret = 0;
 out:
-	lc_parse_unprepare(ctrl_blk, &fp, &file_name);
+	fclose(fp);
 	return ret;
+}
+
+/*************************************************************************************
+ * @brief: parse the config file.
+ * 
+ * @ctrl_blk: control block.
+ * @cfg_file: config file name.
+ * @is_default_cfg: whether the subfile is default config file.
+ * 
+ * @return zero on success, otherwise on failure.
+ ************************************************************************************/
+int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
+                                                         bool is_default_cfg)
+{
+	int ret;
+	struct lc_cfg_file_item file_item;
+
+	/* pus the first item */
+	file_item.file_name = ctrl_blk->file_name_buff;
+	file_item.line_num = 0;
+	file_item.position = 0;
+	memcpy(ctrl_blk->file_name_buff, cfg_file, strlen(cfg_file) + 1);
+
+	ret = lc_cfg_file_push(ctrl_blk, &file_item);
+	if (ret < 0) {
+		lc_err("lc_cfg_file_push failed, ret:%d\n", ret);
+		return ret;
+	}
+
+	/* parsing loop */
+	while (ctrl_blk->cfg_file_stk.sp > 0) {
+		ret = lc_cfg_file_pop(ctrl_blk, &file_item);
+		if (ret < 0) {
+			lc_err("lc_cfg_file_pop failed, ret:%d\n", ret);
+			return ret;
+		}
+
+		ret = lc_parse_cfg_file_with_position(ctrl_blk, is_default_cfg, &file_item);
+		if (ret < 0) {
+			lc_err("lc_parse_cfg_file_with_position failed, ret:%d\n", ret);
+			return ret;
+		}
+	}
+
+	return 0;
 }
