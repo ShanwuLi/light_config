@@ -4,10 +4,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define LC_DEBUG
+//#define LC_DEBUG
+#define LC_INC_FILES_NUM_MAX               (10240)
+#define LC_CFG_ITEMS_CACHE_LINE_NUM        (512)
 #define LC_LINE_BUFF_SIZE_MIN              (4096)
 #define LC_LINE_BUFF_SIZE_MAX              (8192)
-#define LC_LINE_BUFFS_GAP                  (16)
 #define LC_MEM_UPLIMIT                     (128 * 1024 * 1024)
 
 enum lc_parse_res {
@@ -18,6 +19,7 @@ enum lc_parse_res {
 	LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND,
 	LC_PARSE_RES_ERR_INCLUDE_INVALID,
 	LC_PARSE_RES_ERR_LINE_BUFF_OVERFLOW,
+	LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW,
 	LC_PARSE_RES_ERR_MEMORY_FAULT,
 	LC_PARSE_RES_ERR_MEMORY_OVERFLOW,
 	LC_PARSE_RES_ERR_MENU_CFG_INVALID,
@@ -43,47 +45,79 @@ struct lc_list_node {
 };
 
 struct lc_cfg_item {
-	uint64_t name_hashval;
-	uint32_t assign_type;
-	uint32_t name_len;
-	uint32_t value_len;
 	bool enable;
+	uint16_t assign_type;
+	uint16_t name_len;
+	uint16_t value_len;
+	uint64_t name_hashval;
 	char *name;
 	char *value;
+	struct lc_list_node node;
+};
+
+struct lc_cfg_item_cache {
+	uint64_t ref_cnt[LC_CFG_ITEMS_CACHE_LINE_NUM];
+	struct lc_cfg_item *items[LC_CFG_ITEMS_CACHE_LINE_NUM];
+};
+
+struct lc_cfg_list {
+	char *name;
+	struct lc_cfg_item_cache cache;
+	struct lc_list_node node;
+};
+
+struct lc_mem_blk_ctrl {
+	size_t uplimit;
+	size_t used;
+	size_t each_blk_size;
+	size_t curr_blk_size;
+	size_t curr_blk_rest;
+	void *ptr;
+	struct lc_list_node node;
+};
+
+struct lc_mem_blk {
+	void *buff;
 	struct lc_list_node node;
 };
 
 /*************************************************************************************
  * @brief: control block of the config file.
  * 
- * @param mem_uplimit: memory uplimit, if over the memory uplimit, return error.
- * @param mem_used: memory used.
- * @param line_buff_size: size of the line buff.
  * @param menu_cfg_head: head of the menu list of the item.
  * @param default_cfg_head: head of the default list of the item.
  * @param line_buff_size: size of the line buff.
+ * @param line_num: line number of the line.
  * @param colu_num: column number of the line.
- * @param inc_file_path: path of the include file, eg: -include "config.cfg".
+ * @param file_name: file name of the config file.
+ * @param inc_path_buff: path of the include file, eg: -include "config.cfg".
  * @param item_name_buff: buff of the item name. eg.: TEST.
  * @param item_value_buff: buff of the item value, eg.: TEST = item value.
  * @param logic_expr_buff: buff of the logic expression, eg.: ((y|n)&(y&n)|y&!n)|n.
  * @param ref_name_buff: buff of the reference name, eg.: <TEST>
+ * @param temp_buff: buff of the temp.
+ * @buff_pool: memory pool.
+ * @cfg_items_mem_head: head of the list of the item.
+ * @cfg_file_name_stk: memory of the file name stack.
  ************************************************************************************/
 struct lc_ctrl_blk {
-	uint32_t mem_uplimit;
-	uint32_t mem_used;
-	uint32_t line_buff_size;
-	uint32_t colu_num;
-	struct lc_list_node menu_cfg_head;
-	struct lc_list_node default_cfg_head;
+	size_t inc_files_num;
+	size_t line_buff_size;
+	size_t line_num;
+	size_t colu_num;
+	char *file_name;
 	char *line_buff;
-	char *inc_file_path;
+	char *inc_path_buff;
 	char *item_name_buff;
 	char *item_value_buff;
 	char *logic_expr_buff;
 	char *ref_name_buff;
 	char *temp_buff;
 	void *buff_pool;
+	struct lc_cfg_list menu_cfg_head;
+	struct lc_cfg_list default_cfg_head;
+	struct lc_mem_blk_ctrl mem_blk_ctrl;
+	struct lc_mem_blk_ctrl cfg_file_name_stk;
 };
 
 /*************************************************************************************
@@ -95,72 +129,33 @@ struct lc_ctrl_blk {
  *
  * @return: cfg_item.
  ************************************************************************************/
-int light_config_init(struct lc_ctrl_blk *ctrl_blk, uint32_t mem_uplimit,
-                                                 uint32_t line_buff_size);
+int light_config_init(struct lc_ctrl_blk *ctrl_blk, size_t mem_uplimit,
+                      size_t line_buff_size, size_t cfg_file_name_stk_size,
+                      size_t each_mem_blk_szie);
 
 /*************************************************************************************
- * @brief: get the column number of control block.
- *
- * @ctrl_blk: control block.
+ * @brief: parse the subfile.
  * 
- * @return: column number.
- ************************************************************************************/
-int light_config_get_column_num(struct lc_ctrl_blk *ctrl_blk);
-
-/*************************************************************************************
- * @brief: get the line buffer of control block.
- *
- * @ctrl_blk: control block.
- * 
- * @return: line buffer.
- ************************************************************************************/
-char *light_config_get_line_buff(struct lc_ctrl_blk *ctrl_blk);
-
-/*************************************************************************************
- * @brief: get the include file path of control block.
- *
- * @ctrl_blk: control block.
- * 
- * @return: include file path.
- ************************************************************************************/
-char *light_config_get_inc_file_path(struct lc_ctrl_blk *ctrl_blk);
-
-/*************************************************************************************
- * @brief: parse the line in the default config file.
- * 
- * @ctrl_blk: control block.
+ * @cb: control block.
+ * @fp: file pointer.
+ * @pos: position of the file.
+ * @restore_cfg_file: the name of the file name that need restore.
+ * @is_default_cfg: whether the subfile is default config file.
  * 
  * @return parse result.
  ************************************************************************************/
-int light_config_parse_default_cfg_line(struct lc_ctrl_blk *ctrl_blk, uint32_t line_num);
+int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
+                                                         bool is_default_cfg);
 
 /*************************************************************************************
- * @brief: parse line in the menu config file.
- * 
- * @ctrl_blk: control block.
- * 
- * @return parse result.
- ************************************************************************************/
-int light_config_parse_menu_cfg_line(struct lc_ctrl_blk *ctrl_blk);
-
-/*************************************************************************************
- * @brief: free memory.
- *
- * @ctrl_blk: control block.
- *
- * @return: cfg_item.
- ************************************************************************************/
-void light_config_free(struct lc_ctrl_blk *ctrl_blk);
-
-/*************************************************************************************
- * @brief: find a cfg item.
+ * @brief: dump a cfg list.
  *
  * @name: name.
  * @cfg_head: head of the list of the item.
  *
- * @return: cfg_item.
+ * @return: void.
  ************************************************************************************/
-void lc_dump_cfg(struct lc_list_node *cfg_head);
+void lc_dump_cfg(struct lc_cfg_list *cfg_head);
 
 
 #endif

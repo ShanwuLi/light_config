@@ -8,7 +8,7 @@
  * 
  * @return next state of the state machine.
  ************************************************************************************/
-int light_config_parse_state_get_next(int current_state, char ch)
+int lc_parse_state_get_next(int current_state, char ch)
 {
 	switch (current_state) {
 	/*---------------------------------- name ----------------------------- */
@@ -198,9 +198,11 @@ int light_config_parse_state_get_next(int current_state, char ch)
 	/*---------------------------------- dependence config ----------------------------- */
 	case 100:
 		if (ch == ']')
-			return 7005;
+			return 7050;
 		if (ch == '<')
 			return 101;
+		if (ch == '*')
+			return 105;
 		if (ch == '@')
 			return 200;
 		return 104;
@@ -229,6 +231,11 @@ int light_config_parse_state_get_next(int current_state, char ch)
 		if (ch == ']')
 			return 7050;
 		return 104;
+
+	case 105:
+		if (ch == ']')
+			return 7050;
+		break;
 
 	/*----------------------------- @<MACRO> ? ([x], [y]) ---------------------------*/
 	case 150:

@@ -1,95 +1,45 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
 #include "logic_expr_parse.h"
 #include "light_config_parse.h"
 
-static int num_of_parse_calls = 0;
 static struct lc_ctrl_blk lc_cb;
-int lm_read_default_cfg(struct lc_ctrl_blk *cb, char *cfg_file)
-{
-	int ret;
-	char *pch;
-	FILE *fp;
-	int str_len = 0;
-	static int line_num = 0;
-
-	num_of_parse_calls++;
-	if (num_of_parse_calls > 1000)
-		return -1000;
-
-	if (cfg_file == NULL) {
-		return -88;
-	}
-
-	fp = fopen(cfg_file, "r");
-	if (fp == NULL) {
-		printf("Fail to open file %s\n", cfg_file);
-		return -8;
-	}
-
-	line_num = 0;
-	memcpy(cb->inc_file_path, cfg_file, strlen(cfg_file) + 1);
-	while (pch = fgets(cb->line_buff + str_len, cb->line_buff_size - (str_len + 2), fp)) {
-		line_num++;
-
-		str_len = strlen(cb->line_buff);
-		if (str_len >= cb->line_buff_size) {
-			printf("line[%d] is too long, please check it\n", line_num);
-			return -1;
-		}
-
-		/* skip comment line and empty line */
-		if (cb->line_buff[0] == '#' || cb->line_buff[0] == '\n') {
-			memset(cb->line_buff, 0, strlen(cb->line_buff) + 1);
-			str_len = 0;
-			continue;
-		}
-
-		if (cb->line_buff[str_len - 2] == '\\') {
-			str_len -= 2;
-			continue;
-		}
-
-		ret = light_config_parse_default_cfg_line(cb, line_num);
-		if (ret < 0) {
-			fclose(fp);
-			return ret;
-		}
-
-		if (ret != LC_PARSE_RES_OK_DEPEND_CFG && ret != LC_PARSE_RES_OK_INCLUDE &&
-		    ret != LC_PARSE_RES_OK_NORMAL_CFG) {
-			printf("Fail to parse %s default cfg line %d, col[%d], ret:%d\n",
-			        cfg_file, line_num, cb->colu_num, ret);
-			fclose(fp);
-			return ret;
-		}
-
-		if (ret == LC_PARSE_RES_OK_INCLUDE) {
-			printf("parsing subfile:%s\n", cb->inc_file_path);
-			num_of_parse_calls++;
-			ret = lm_read_default_cfg(cb, cb->inc_file_path);
-			if (ret < 0) {
-				fclose(fp);
-				return ret;
-			}
-		}
-
-		str_len = 0;
-	}
-
-	fclose(fp);
-	return 0;
-}
 
 int main(int argc, char *argv[])
 {
 	int ret;
+	time_t rawtime;
+	struct tm * timeinfo;
 
-	ret = light_config_init(&lc_cb, 16 * 1024 * 1024, 8192);
+	/* get the time */
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	printf("start: %s", asctime(timeinfo));
+
+	ret = light_config_init(&lc_cb, 128 * 1024 * 1024, 8192, 16, 16 * 1024 * 1024);
 	printf("ret = %d\n", ret);
 
-	ret = lm_read_default_cfg(&lc_cb, "test_default.cfg");
-	printf("ret:%d\n", ret);
+	ret = light_config_parse_cfg_file(&lc_cb, "test_default.cfg", true);
+	if (ret < 0) {
+		printf("Fail to parse default cfg file, ret:%d\n", ret);
+	}
+
+	ret = light_config_parse_cfg_file(&lc_cb, "test_menu.cfg", false);
+	if (ret < 0) {
+		printf("Fail to parse menu cfg file, ret:%d\n", ret);
+	}
+
+	printf("mem_used:%llu, ret:%d\n", lc_cb.mem_blk_ctrl.used, ret);
 	lc_dump_cfg(&lc_cb.default_cfg_head);
-	return 0;
+	printf("menu cfg dump:\n\n\n");
+	lc_dump_cfg(&lc_cb.menu_cfg_head);
+
+	/* get the time */
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	printf("end: %s", asctime(timeinfo));
+
+	return ret;
 }

@@ -17,6 +17,6 @@ enum lc_parse_state {
  * 
  * @return next state of the state machine.
  ************************************************************************************/
-int light_config_parse_state_get_next(int current_state, char ch);
+int lc_parse_state_get_next(int current_state, char ch);
 
 #endif
