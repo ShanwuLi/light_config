@@ -70,7 +70,7 @@ struct lc_cfg_list {
 struct lc_cfg_file_item {
 	char *file_name;
 	fpos_t position;
-	int line_num;
+	size_t line_num;
 };
 
 struct lc_cfg_file_stk {
@@ -102,7 +102,6 @@ struct lc_mem_blk {
  * @param menu_cfg_head: head of the menu list of the item.
  * @param default_cfg_head: head of the default list of the item.
  * @param line_buff_size: size of the line buff.
- * @param line_num: line number of the line.
  * @param colu_num: column number of the line.
  * @param file_name: file name of the config file.
  * @param inc_path_buff: path of the include file, eg: -include "config.cfg".
@@ -117,7 +116,6 @@ struct lc_mem_blk {
  ************************************************************************************/
 struct lc_ctrl_blk {
 	size_t line_buff_size;
-	size_t line_num;
 	size_t colu_num;
 	char *line_buff;
 	char *file_name_buff;

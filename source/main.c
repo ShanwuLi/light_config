@@ -32,9 +32,9 @@ int main(int argc, char *argv[])
 	}
 
 	printf("mem_used:%llu, ret:%d\n", lc_cb.mem_blk_ctrl.used, ret);
-	lc_dump_cfg(&lc_cb.default_cfg_head);
+	//lc_dump_cfg(&lc_cb.default_cfg_head);
 	printf("menu cfg dump:\n\n\n");
-	lc_dump_cfg(&lc_cb.menu_cfg_head);
+	//lc_dump_cfg(&lc_cb.menu_cfg_head);
 
 	/* get the time */
 	time(&rawtime);

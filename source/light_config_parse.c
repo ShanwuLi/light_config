@@ -41,7 +41,7 @@
 #define lc_warn(fmt, ...)      ((void)fmt)
 #endif
 
-#define lc_err(fmt, ...)       printf("[LC_ERR]"fmt, ##__VA_ARGS__)
+#define lc_err(fmt, ...)       printf("[LC_ERRO] "fmt, ##__VA_ARGS__)
 
 struct lc_parse_ctrl_blk;
 typedef int (*parse_func_t)(struct lc_ctrl_blk *ctrl_blk,
@@ -70,22 +70,51 @@ struct lc_parse_ctrl_blk {
 };
 
 /*************************************************************************************
- * @brief: parse line and get the hash value (BKDR Hash Function).
+ * @brief: parse line and get the hash value (murmur2 Hash Function).
  * 
  * @param str: string to be parsed.
  * 
  * @return: hash value.
  ************************************************************************************/
-static uint64_t lc_bkdr_hash(char *str)
+uint64_t murmur_hash2_64a(void *str)
 {
-	uint64_t seed = 1313171;
-	uint64_t hash = 0;
+	int len = strlen(str);
+	uint64_t seed = 21788233;
+	unsigned char * data2;
+	uint64_t m = 0xc6a4a7935bd1e995LLU;
+	int r = 47;
+	uint64_t h = seed ^ (len * m);
+	uint64_t *data = (uint64_t *)str;
+	uint64_t *end = data + (len / 8);
 
-	while (*str)
-		hash = hash * seed + (*str++);
- 
-	return (hash & 0x7FFFFFFFFFFFFFFF);
-}
+	while(data != end) {
+		uint64_t k = *data++;
+		
+		k *= m;
+		k ^= k >> r;
+		k *= m;
+
+		h ^= k;
+		h *= m;
+	}
+
+	data2 = (unsigned char*)data;
+	switch(len & 7) {
+	case 7: h ^= ((uint64_t)data2[6]) << 48;
+	case 6: h ^= ((uint64_t)data2[5]) << 40;
+	case 5: h ^= ((uint64_t)data2[4]) << 32;
+	case 4: h ^= ((uint64_t)data2[3]) << 24;
+	case 3: h ^= ((uint64_t)data2[2]) << 16;
+	case 2: h ^= ((uint64_t)data2[1]) << 8;
+	case 1: h ^= ((uint64_t)data2[0]);
+			h *= m;
+	};
+
+	h ^= h >> r;
+	h *= m;
+	h ^= h >> r;
+	return h;
+} 
 
 /*************************************************************************************
  * @brief: list node init.
@@ -141,7 +170,7 @@ static int lc_cfg_file_push(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_file_ite
 	struct lc_cfg_file_stk *stk = &(ctrl_blk->cfg_file_stk);
 
 	if (stk->sp >= stk->depth) {
-		lc_err("cfg file num[%lld] overflow[%lld]\n", stk->sp, stk->depth);
+		lc_err("push fail, cfg file num[%lld] overflow[%lld]\n", stk->sp, stk->depth);
 		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
 	}
 	
@@ -173,7 +202,7 @@ static int lc_cfg_file_pop(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_file_item
 	struct lc_cfg_file_stk *stk = &(ctrl_blk->cfg_file_stk);
 
 	if (stk->sp < 0) {
-		lc_err("cfg file num[%lld] overflow\n", stk->sp);
+		lc_err("pop fial, cfg file num[%lld] overflow\n", stk->sp);
 		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
 	}
 
@@ -185,6 +214,21 @@ static int lc_cfg_file_pop(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_file_item
 	item->position = stk->item_stk[stk->sp].position;
 	free(name);
 	return 0;
+}
+
+/*************************************************************************************
+ * @brief: get the previous cfg file name.
+ * 
+ * @param ctrl_blk: control block.
+ * @return: previous cfg file name.
+ ************************************************************************************/
+static char *lc_cfg_file_get_prev_name(struct lc_ctrl_blk *ctrl_blk)
+{
+	void *name;
+	struct lc_cfg_file_stk *stk = &(ctrl_blk->cfg_file_stk);
+
+	name = ((stk->sp <= 0) ? NULL : stk->item_stk[stk->sp - 1].file_name);
+	return name;
 }
 
 /*************************************************************************************
@@ -278,7 +322,7 @@ static struct lc_cfg_item *lc_find_cfg_item(struct lc_cfg_list *cfg_head, char *
 		if (cfg_head->cache.items[i] == NULL)
 			continue;
 
-		if (cfg_head->cache.items[i]->name_hashval == lc_bkdr_hash(name) &&
+		if (cfg_head->cache.items[i]->name_hashval == murmur_hash2_64a(name) &&
 		    strcmp(cfg_head->cache.items[i]->name, name) == 0) {
 			cfg_head->cache.ref_cnt[i]++;
 			return cfg_head->cache.items[i];
@@ -288,7 +332,7 @@ static struct lc_cfg_item *lc_find_cfg_item(struct lc_cfg_list *cfg_head, char *
 	/* find the item in list */
 	lc_info("find item[%s] in list\n", name);
 	lc_list_for_each_entry_reverse(pos, &cfg_head->node, struct lc_cfg_item, node) {
-		if (pos->name_hashval == lc_bkdr_hash(name)) {
+		if (pos->name_hashval == murmur_hash2_64a(name)) {
 			if (strcmp(pos->name, name) != 0)
 				continue;
 
@@ -428,7 +472,7 @@ static int lc_add_cfg_item(struct lc_ctrl_blk *ctrl_blk, struct lc_list_node *cf
 	cfg_item->name_len = name_len;
 	cfg_item->value = cfg_item->name + name_len + 1;
 	cfg_item->value_len = value_len;
-	cfg_item->name_hashval = lc_bkdr_hash(name);
+	cfg_item->name_hashval = murmur_hash2_64a(name);
 	cfg_item->assign_type = assign_type;
 	cfg_item->enable = enable;
 	memcpy(cfg_item->name, name, name_len);
@@ -1030,14 +1074,15 @@ static int lc_parse_check_params(struct lc_ctrl_blk *ctrl_blk, char *cfg_file)
  * 
  * @return zero on success, otherwise on failure.
  ************************************************************************************/
-static int lc_parse_cfg_file_with_position(struct lc_ctrl_blk *ctrl_blk, bool is_default_cfg,
-                                                         struct lc_cfg_file_item *file_item)
+static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_default_cfg,
+                                                      struct lc_cfg_file_item *file_item)
 {
 	int ret;
 	char *pch;
 	FILE *fp;
 	size_t str_len = 0;
 	size_t line_num = 0;
+	char *prev_file_name;
 	char *file_name = file_item->file_name;
 	struct lc_cfg_file_item inc_file_item;
 
@@ -1047,9 +1092,13 @@ static int lc_parse_cfg_file_with_position(struct lc_ctrl_blk *ctrl_blk, bool is
 		return ret;
 	}
 
+	prev_file_name = lc_cfg_file_get_prev_name(ctrl_blk);
+	prev_file_name = (prev_file_name == NULL ? "top file" : prev_file_name);
+
 	fp = fopen(file_name, "r");
 	if (fp == NULL) {
-		lc_err("Fail to open file %s\n", file_name);
+		lc_err("Fail to open file %s, in %s, line[%llu]\n",
+		        file_name, prev_file_name, file_item->line_num);
 		return LC_PASER_RES_ERR_FILE_NOT_FOUND;
 	}
 
@@ -1105,7 +1154,7 @@ static int lc_parse_cfg_file_with_position(struct lc_ctrl_blk *ctrl_blk, bool is
 			}
 
 			inc_file_item.file_name = ctrl_blk->inc_path_buff;
-			inc_file_item.line_num = 0;
+			inc_file_item.line_num = line_num;
 			inc_file_item.position = 0;
 			ret = lc_cfg_file_push(ctrl_blk, &inc_file_item);
 			if (ret < 0) {
@@ -1139,7 +1188,7 @@ int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
 	int ret;
 	struct lc_cfg_file_item file_item;
 
-	/* pus the first item */
+	/* push the first item */
 	file_item.file_name = ctrl_blk->file_name_buff;
 	file_item.line_num = 0;
 	file_item.position = 0;
@@ -1159,9 +1208,13 @@ int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
 			return ret;
 		}
 
-		ret = lc_parse_cfg_file_with_position(ctrl_blk, is_default_cfg, &file_item);
+		if (file_item.position == 0)
+			printf("[LC_INFO] parsing %s\n", file_item.file_name);
+
+		ret = lc_parse_cfg_file_with_item(ctrl_blk, is_default_cfg, &file_item);
 		if (ret < 0) {
-			lc_err("lc_parse_cfg_file_with_position failed, ret:%d\n", ret);
+			lc_err("parse cfg_file with item failed, in line[%llu], ret:%d\n",
+			        file_item.line_num, ret);
 			return ret;
 		}
 	}
