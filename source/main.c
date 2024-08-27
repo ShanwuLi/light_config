@@ -13,6 +13,12 @@ int main(int argc, char *argv[])
 	time_t rawtime;
 	struct tm * timeinfo;
 
+
+	if (argc != 3) {
+		lc_err("Usage: %s <menu config file> <default config file>\n", argv[0]);
+		return 0;
+	}
+
 	/* get the time */
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
@@ -21,12 +27,12 @@ int main(int argc, char *argv[])
 	ret = light_config_init(&lc_cb, 128 * 1024 * 1024, 8192, 10240, 16 * 1024 * 1024);
 	printf("ret = %d\n", ret);
 
-	ret = light_config_parse_cfg_file(&lc_cb, "test_default.cfg", true);
+	ret = light_config_parse_cfg_file(&lc_cb, argv[2], true);
 	if (ret < 0) {
 		printf("Fail to parse default cfg file, ret:%d\n", ret);
 	}
 
-	ret = light_config_parse_cfg_file(&lc_cb, "test_menu.cfg", false);
+	ret = light_config_parse_cfg_file(&lc_cb, argv[1], false);
 	if (ret < 0) {
 		printf("Fail to parse menu cfg file, ret:%d\n", ret);
 	}

@@ -782,8 +782,9 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			cb.default_item = lc_find_cfg_item(&ctrl_blk->default_cfg_head,
 			                                     ctrl_blk->item_name_buff);
 			if (cb.default_item == NULL) {
-				lc_err("item[%s] not found in %s", ctrl_blk->item_name_buff,
-				         ctrl_blk->default_cfg_head.name);
+				lc_err("item[%s] not defined in default config when parsing %s line %llu, col %llu\n",
+				        ctrl_blk->item_name_buff, ctrl_blk->file_name_buff,
+				        line_num, ctrl_blk->colu_num);
 				return LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND;
 			}
 			cb.parse_elem_start = lc_parse_elem_start_func_menu;
@@ -1057,7 +1058,7 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 			}
 
 			inc_file_item.file_name = ctrl_blk->inc_path_buff;
-			inc_file_item.line_num = line_num;
+			inc_file_item.line_num = 0;
 			inc_file_item.position = 0;
 			ret = lc_cfg_file_push(ctrl_blk, &inc_file_item);
 			if (ret < 0) {

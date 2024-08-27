@@ -106,7 +106,7 @@ int lc_parse_array_terminal_func_menu(struct lc_ctrl_blk *ctrl_blk,
                             struct lc_parse_ctrl_blk *pcb, char ch)
 {
 	if (pcb->match_state != 1) {
-		lc_err("menu element[%s] not found in [%s]\n", pcb->default_item->value,
+		lc_err("menu element[%s] not found in %s\n", pcb->default_item->value,
 		        ctrl_blk->item_name_buff);
 		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 	}
