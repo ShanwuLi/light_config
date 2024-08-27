@@ -13,14 +13,14 @@
 #define LC_MEM_UPLIMIT                     (128 * 1024 * 1024)
 
 #ifdef LC_DEBUG
-#define lc_info(fmt, ...)                  printf("[LC_INFO] "fmt, ##__VA_ARGS__)
-#define lc_warn(fmt, ...)                  printf("[LC_WARN] "fmt, ##__VA_ARGS__)
+#define lc_info(fmt, ...)                  printf(fmt, ##__VA_ARGS__)
+#define lc_warn(fmt, ...)                  printf(fmt, ##__VA_ARGS__)
 #else
 #define lc_info(fmt, ...)                  ((void)fmt)
 #define lc_warn(fmt, ...)                  ((void)fmt)
 #endif
 
-#define lc_err(fmt, ...)                   printf("[LC_ERRO] "fmt, ##__VA_ARGS__)
+#define lc_err(fmt, ...)                   printf("Error: "fmt, ##__VA_ARGS__)
 
 #define lc_exit(ret)                       exit(ret)
 

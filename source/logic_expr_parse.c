@@ -21,7 +21,7 @@ static int match(char *input, int *pos, char c)
 		return 0;
 	}
 
-	printf("%c [%d]Error: expected '%c'\n", input[*pos], *pos, c);
+	printf("Error: %c [%d]Error: expected '%c'\n", input[*pos], *pos, c);
 	return -((*pos) + 1);
 }
 

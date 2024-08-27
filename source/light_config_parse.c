@@ -1112,7 +1112,7 @@ int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
 		}
 
 		if (file_item.position == 0)
-			printf("[LC_INFO] parsing %s\n", file_item.file_name);
+			printf("parsing %s\n", file_item.file_name);
 
 		ret = lc_parse_cfg_file_with_item(ctrl_blk, is_default_cfg, &file_item);
 		if (ret < 0) {
