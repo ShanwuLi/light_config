@@ -6,6 +6,7 @@
 #include "logic_expr_parse.h"
 #include "light_config_parse.h"
 #include "light_config_parse_sm.h"
+#include "light_config_parse_func.h"
 
 #define container_of(ptr, struct_type, member) \
 	((struct_type *)((char *)(ptr) - (char *)(&(((struct_type *)0)->member))))
@@ -31,43 +32,6 @@
 
 #define lc_list_first_entry(head, entry_type, member) \
 	container_of((head)->next, entry_type, member)
-
-
-#ifdef LC_DEBUG
-#define lc_info(fmt, ...)      printf("[LC_INFO] "fmt, ##__VA_ARGS__)
-#define lc_warn(fmt, ...)      printf("[LC_WARN] "fmt, ##__VA_ARGS__)
-#else
-#define lc_info(fmt, ...)      ((void)fmt)
-#define lc_warn(fmt, ...)      ((void)fmt)
-#endif
-
-#define lc_err(fmt, ...)       printf("[LC_ERRO] "fmt, ##__VA_ARGS__)
-
-struct lc_parse_ctrl_blk;
-typedef int (*parse_func_t)(struct lc_ctrl_blk *ctrl_blk,
-                   struct lc_parse_ctrl_blk *cb, char ch);
-
-struct lc_parse_ctrl_blk {
-	bool item_en;
-	bool ref_en;
-	int match_state;
-	int select;
-	int char_idx;
-	int name_idx;
-	int value_idx;
-	int expr_idx;
-	int path_idx;
-	int temp_idx;
-	int arr_elem_num;
-	int arr_elem_idx;
-	int ref_name_idx;
-	int curr_state;
-	int next_state;
-	uint16_t assign_type;
-	parse_func_t parsing;
-	parse_func_t parse_terminal;
-	struct lc_cfg_item *default_item;
-};
 
 /*************************************************************************************
  * @brief: parse line and get the hash value (murmur2 Hash Function).
@@ -578,103 +542,6 @@ int light_config_init(struct lc_ctrl_blk *ctrl_blk, size_t mem_uplimit,
 }
 
 /*************************************************************************************
- * @brief: parse select function.
- *
- * @param ctrl_blk: control block.
- * @param pcb: parse control block.
- * @param ch: char.
- *
- * @return: zero on success, else error code.
- ************************************************************************************/
-static int lc_parsing_func_select(struct lc_ctrl_blk *ctrl_blk,
-                        struct lc_parse_ctrl_blk *pcb, char ch)
-{
-	if (pcb->select < 0)
-		return 0;
-
-	if (pcb->select == pcb->arr_elem_num)
-		ctrl_blk->temp_buff[pcb->temp_idx++] = ch;
-	return 0;
-}
-
-/*************************************************************************************
- * @brief: parse menu function.
- *
- * @param ctrl_blk: control block.
- * @param pcb: parse control block.
- * @param ch: char.
- *
- * @return: zero on success, else error code.
- ************************************************************************************/
-static int lc_parsing_func_menu(struct lc_ctrl_blk *ctrl_blk,
-                      struct lc_parse_ctrl_blk *pcb, char ch)
-{
-	if (pcb->match_state != 0)
-		return 0;
-
-	if (ch != pcb->default_item->value[pcb->arr_elem_idx])
-		pcb->match_state = -1;
-
-	if ((pcb->match_state == 0) && ((pcb->arr_elem_idx + 1) == pcb->default_item->value_len))
-		pcb->match_state = 1;
-
-	pcb->temp_idx++;
-	pcb->arr_elem_idx++;
-
-	return 0;
-}
-
-/*************************************************************************************
- * @brief: parse select terminal function.
- *
- * @param ctrl_blk: control block.
- * @param cb: parse control block.
- * @param ch: char.
- *
- * @return: zero on success, else error code.
- ************************************************************************************/
-static int lc_parse_terminal_func_select(struct lc_ctrl_blk *ctrl_blk,
-                              struct lc_parse_ctrl_blk *pcb, char ch)
-{
-	if (pcb->select < 0)
-		return 0;
-
-	if (pcb->arr_elem_num > 2) {
-		lc_err("element num[%d] must be 2 with the [@<MACRO] ? ([x], [y])\n",
-		        pcb->arr_elem_num);
-		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
-	}
-
-	ctrl_blk->temp_buff[pcb->temp_idx] = '\0';
-	memcpy(ctrl_blk->item_value_buff, ctrl_blk->temp_buff, pcb->temp_idx + 1);
-	pcb->value_idx += pcb->temp_idx;
-	return 0;
-}
-
-/*************************************************************************************
- * @brief: parse menu terminal function.
- *
- * @param ctrl_blk: control block.
- * @param pcb: parse control block.
- * @param ch: char.
- *
- * @return: zero on success, else error code.
- ************************************************************************************/
-static int lc_parse_terminal_func_menu(struct lc_ctrl_blk *ctrl_blk,
-                             struct lc_parse_ctrl_blk *pcb, char ch)
-{
-	if (pcb->match_state != 1) {
-		lc_err("menu element[%s] not found in [%s]\n", pcb->default_item->value,
-		        ctrl_blk->item_name_buff);
-		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
-	}
-
-	memcpy(ctrl_blk->item_value_buff, pcb->default_item->value, pcb->default_item->value_len);
-	pcb->value_idx += pcb->default_item->value_len;
-	return 0;
-}
-
-/*************************************************************************************
  * @brief: find the cfg item, if found, copy the value to dst.
  * 
  * @param ctrl_blk: control block.
@@ -795,7 +662,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			ret = lc_find_cfg_item_and_get_en(ctrl_blk, cfg_list,
 			                 ctrl_blk->ref_name_buff, &cb.ref_en);
 			if (ret < 0) {
-				lc_err("ref [%s] not found in [%s] line[%llu], col[%llu]\n",
+				lc_err("ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
 				          line_num, ctrl_blk->colu_num);
 				return ret;
@@ -825,7 +692,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			                ctrl_blk->inc_path_buff + cb.path_idx,
 			                ctrl_blk->ref_name_buff);
 			if (ret < 0) {
-				lc_err("ref [%s] not found in [%s] line[%llu], col[%llu]\n",
+				lc_err("ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
 				          line_num, ctrl_blk->colu_num);
 				return ret;
@@ -857,7 +724,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			                              ctrl_blk->item_value_buff + cb.value_idx,
 			                              ctrl_blk->ref_name_buff);
 			if (ret < 0) {
-				lc_err("ref [%s] not found in [%s] line[%llu], col[%llu]\n",
+				lc_err("ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
 				          line_num, ctrl_blk->colu_num);
 				return ret;
@@ -873,7 +740,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			ret = lc_find_cfg_item_and_cpy_val(ctrl_blk, &ctrl_blk->default_cfg_head,
 			                    ctrl_blk->item_value_buff, ctrl_blk->item_name_buff);
 			if (ret < 0) {
-				lc_err("ref [%s] not found in [%s] line[%llu], col[%llu]\n",
+				lc_err("ref macro[%s] not found in %s line %llu, col %llu\n",
 				        ctrl_blk->item_name_buff, ctrl_blk->default_cfg_head.name,
 				        line_num, ctrl_blk->colu_num);
 				return ret;
@@ -894,7 +761,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			ret = lc_find_cfg_item_and_get_en(ctrl_blk, &ctrl_blk->menu_cfg_head,
 			                                ctrl_blk->ref_name_buff, &cb.ref_en);
 			if (ret < 0) {
-				lc_err("ref [%s] not found in [%s] line[%llu], col[%llu]\n",
+				lc_err("ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
 				          line_num, ctrl_blk->colu_num);
 				return ret;
@@ -903,8 +770,8 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 		
 		case 154:
 			cb.select = (cb.ref_en ? 0 : 1);
-			cb.parsing = lc_parsing_func_select;
-			cb.parse_terminal = lc_parse_terminal_func_select;
+			cb.parsing_elem = lc_parsing_elem_func_select;
+			cb.parse_array_terminal = lc_parse_array_terminal_func_select;
 			break;
 		
 		case 200:
@@ -915,12 +782,13 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			cb.default_item = lc_find_cfg_item(&ctrl_blk->default_cfg_head,
 			                                     ctrl_blk->item_name_buff);
 			if (cb.default_item == NULL) {
-				lc_err("item [%s] not found in [%s]", ctrl_blk->item_name_buff,
+				lc_err("item[%s] not found in %s", ctrl_blk->item_name_buff,
 				         ctrl_blk->default_cfg_head.name);
 				return LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND;
 			}
-			cb.parsing = lc_parsing_func_menu;
-			cb.parse_terminal = lc_parse_terminal_func_menu;
+			cb.parse_elem_start = lc_parse_elem_start_func_menu;
+			cb.parsing_elem = lc_parsing_elem_func_menu;
+			cb.parse_array_terminal = lc_parse_array_terminal_func_menu;
 			break;
 		
 		case 7000:
@@ -930,19 +798,34 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 		
 		case 7002:
 			cb.arr_elem_idx = 0;
-			cb.match_state = ((cb.match_state > 0) ? cb.match_state : 0);
+			if (cb.parse_elem_start == NULL)
+				break;
+			ret = cb.parse_elem_start(ctrl_blk, &cb, ch);
+			if (ret < 0)
+				return -cb.next_state - 1;
 			break;
 
 		case 7003:
-			cb.parsing(ctrl_blk, &cb, ch);
+			if (cb.parsing_elem == NULL)
+				break;
+			ret = cb.parsing_elem(ctrl_blk, &cb, ch);
+			if (ret < 0)
+				return -cb.next_state - 1;
 			break;
 		
 		case 7004:
 			cb.arr_elem_num++;
+			if (cb.parse_elem_end == NULL)
+				break;
+			ret = cb.parse_elem_end(ctrl_blk, &cb, ch);
+			if (ret < 0)
+				return -cb.next_state - 1;
 			break;
 
 		case 7006:
-			ret = cb.parse_terminal(ctrl_blk, &cb, ch);
+			if (cb.parse_array_terminal == NULL)
+				break;
+			ret = cb.parse_array_terminal(ctrl_blk, &cb, ch);
 			if (ret < 0)
 				return ret;
 			break;
@@ -975,7 +858,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			ret = lc_find_cfg_item_and_get_en(ctrl_blk, &ctrl_blk->menu_cfg_head,
 			                                ctrl_blk->ref_name_buff, &cb.ref_en);
 			if (ret < 0) {
-				lc_err("ref [%s] not found in [%s] line[%llu], col[%llu]\n",
+				lc_err("ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
 				          line_num, ctrl_blk->colu_num);
 				return ret;
@@ -1002,7 +885,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			             ctrl_blk->item_value_buff + cb.value_idx,
 			             ctrl_blk->ref_name_buff);
 			if (ret < 0) {
-				lc_err("ref [%s] not found in [%s] line[%llu], col[%llu]\n",
+				lc_err("ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
 				          line_num, ctrl_blk->colu_num);
 				return ret;
@@ -1066,6 +949,25 @@ static int lc_parse_check_params(struct lc_ctrl_blk *ctrl_blk, char *cfg_file)
 }
 
 /*************************************************************************************
+ * @brief: get the line content of the file.
+ * 
+ * @param ctrl_blk: control block.
+ * @param fp: file pointer.
+ * @param buff_offset: offset of buffer.
+ * 
+ * @return pointer of line.
+ ************************************************************************************/
+static char *lc_get_line(struct lc_ctrl_blk *ctrl_blk, FILE *fp, size_t buff_offset)
+{
+	char *pch;
+
+	pch = fgets(ctrl_blk->line_buff + buff_offset,
+	            ctrl_blk->line_buff_size - (buff_offset + 2),
+	            fp);
+	return pch;
+}
+
+/*************************************************************************************
  * @brief: parse the subfile.
  * 
  * @param ctrl_blk: control block.
@@ -1080,9 +982,9 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 	int ret;
 	char *pch;
 	FILE *fp;
-	size_t str_len = 0;
-	size_t line_num = 0;
+	size_t len = 0;
 	char *prev_file_name;
+	size_t line_num = file_item->line_num;
 	char *file_name = file_item->file_name;
 	struct lc_cfg_file_item inc_file_item;
 
@@ -1097,7 +999,7 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 
 	fp = fopen(file_name, "r");
 	if (fp == NULL) {
-		lc_err("Fail to open file %s, in %s, line[%llu]\n",
+		lc_err("Fail to open file %s, in %s line %llu\n",
 		        file_name, prev_file_name, file_item->line_num);
 		return LC_PASER_RES_ERR_FILE_NOT_FOUND;
 	}
@@ -1109,37 +1011,38 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 	}
 
 	/* parse file line by line */
-	while (pch = fgets(ctrl_blk->line_buff + str_len, ctrl_blk->line_buff_size - (str_len + 2), fp)) {
+	for (pch = lc_get_line(ctrl_blk, fp, len); pch; pch = lc_get_line(ctrl_blk, fp, len)) {
+
 		line_num++;
-		str_len = strlen(ctrl_blk->line_buff);
-		if (str_len >= ctrl_blk->line_buff_size) {
-			lc_err("line[%llu] is too long, please check it\n", line_num);
+		len = strlen(ctrl_blk->line_buff);
+		if (len >= ctrl_blk->line_buff_size) {
+			lc_err("line %llu is too long, please check it\n", line_num);
 			goto out;
 		}
 
 		/* skip comment line and empty line */
 		if (ctrl_blk->line_buff[0] == '#' || ctrl_blk->line_buff[0] == '\n') {
 			memset(ctrl_blk->line_buff, 0, strlen(ctrl_blk->line_buff) + 1);
-			str_len = 0;
+			len = 0;
 			continue;
 		}
 
-		if (ctrl_blk->line_buff[str_len - 2] == '\\') {
-			str_len -= 2;
+		if (ctrl_blk->line_buff[len - 2] == '\\') {
+			len -= 2;
 			continue;
 		}
 
 		lc_info("parsing: %s\n", ctrl_blk->line_buff);
 		ret = light_config_parse_cfg_line(ctrl_blk, line_num, is_default_cfg);
 		if (ret < 0) {
-			lc_err("Fail to parse %s default cfg line %llu, col[%llu], ret:%d\n",
+			lc_err("Fail to parse %s line %llu, col %llu, ret:%d\n",
 			        file_name, line_num, ctrl_blk->colu_num, ret);
 			goto out;
 		}
 
 		if (ret != LC_PARSE_RES_OK_DEPEND_CFG && ret != LC_PARSE_RES_OK_INCLUDE &&
 		    ret != LC_PARSE_RES_OK_NORMAL_CFG) {
-			lc_err("Fail to parse %s default cfg line %llu, col[%llu], ret:%d\n",
+			lc_err("Fail to parse %s line %llu, col[%llu], ret:%d\n",
 			        file_name, line_num, ctrl_blk->colu_num, ret);
 			goto out;
 		}
@@ -1164,7 +1067,7 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 			goto out;
 		}
 
-		str_len = 0;
+		len = 0;
 	}
 
 	ret = 0;
@@ -1213,8 +1116,7 @@ int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
 
 		ret = lc_parse_cfg_file_with_item(ctrl_blk, is_default_cfg, &file_item);
 		if (ret < 0) {
-			lc_err("parse cfg_file with item failed, in line[%llu], ret:%d\n",
-			        file_item.line_num, ret);
+			lc_err("Fail to parse %s, ret:%d\n", file_item.file_name, ret);
 			return ret;
 		}
 	}

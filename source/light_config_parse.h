@@ -12,6 +12,23 @@
 #define LC_LINE_BUFF_SIZE_MAX              (8192)
 #define LC_MEM_UPLIMIT                     (128 * 1024 * 1024)
 
+#ifdef LC_DEBUG
+#define lc_info(fmt, ...)                  printf("[LC_INFO] "fmt, ##__VA_ARGS__)
+#define lc_warn(fmt, ...)                  printf("[LC_WARN] "fmt, ##__VA_ARGS__)
+#else
+#define lc_info(fmt, ...)                  ((void)fmt)
+#define lc_warn(fmt, ...)                  ((void)fmt)
+#endif
+
+#define lc_err(fmt, ...)                   printf("[LC_ERRO] "fmt, ##__VA_ARGS__)
+
+#define lc_exit(ret)                       exit(ret)
+
+struct lc_ctrl_blk;
+struct lc_parse_ctrl_blk;
+typedef int (*parse_func_t)(struct lc_ctrl_blk *ctrl_blk,
+                            struct lc_parse_ctrl_blk *cb, char ch);
+
 enum lc_parse_res {
 	/* error code */
 	LC_PARSE_RES_ERR_CTRL_BLK_INVALID = -99,
@@ -94,8 +111,6 @@ struct lc_mem_blk {
 	struct lc_list_node node;
 };
 
-#define lc_exit(ret)            exit(ret)
-
 /*************************************************************************************
  * @brief: control block of the config file.
  * 
@@ -130,6 +145,30 @@ struct lc_ctrl_blk {
 	struct lc_cfg_list default_cfg_head;
 	struct lc_mem_blk_ctrl mem_blk_ctrl;
 	struct lc_cfg_file_stk cfg_file_stk;
+};
+
+struct lc_parse_ctrl_blk {
+	bool item_en;
+	bool ref_en;
+	int match_state;
+	int select;
+	int char_idx;
+	int name_idx;
+	int value_idx;
+	int expr_idx;
+	int path_idx;
+	int temp_idx;
+	int arr_elem_num;
+	int arr_elem_idx;
+	int ref_name_idx;
+	int curr_state;
+	int next_state;
+	uint16_t assign_type;
+	parse_func_t parse_elem_start;
+	parse_func_t parsing_elem;
+	parse_func_t parse_elem_end;
+	parse_func_t parse_array_terminal;
+	struct lc_cfg_item *default_item;
 };
 
 /*************************************************************************************

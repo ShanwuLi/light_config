@@ -1,0 +1,12 @@
+{
+	"files.associations": {
+		"strhash.h": "c",
+		"lm_cfg.h": "c",
+		"read_default_cfg.h": "c",
+		"light_config.h": "c",
+		"light_config_parse.h": "c",
+		"light_config_parse_sm.h": "c",
+		"type_traits": "c",
+		"light_config_parse_func.h": "c"
+	}
+}

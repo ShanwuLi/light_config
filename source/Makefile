@@ -8,7 +8,7 @@ DIR_GUARD = @$(MKDIR) $(@D)
 
 # Define the source files, object files, and the final executable name
 SRCS= main.c light_config_parse.c logic_expr_parse.c \
-      light_config_parse_sm.c
+      light_config_parse_sm.c light_config_parse_func.c
 
 
 C_OBJS_TMP = $(patsubst %.c,%.o,$(SRCS))
@@ -33,10 +33,6 @@ clean:
 	rm -rf out test/main.exe
 
 # Include dependency rules if they exist
--include $(OBJS:.o=.d)
-
 # Automatic rule generation for dependencies
 out/%.d: %.c
 	$(CC) $(CFLAGS) -MM $< > $@
-
-
