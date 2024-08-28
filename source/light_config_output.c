@@ -14,6 +14,7 @@ static int lc_output_merged_cfg_to_file(struct lc_cfg_list *cfg_list,
                        char *line_buffer, char *merged_cfg_file_name)
 {
 	int char_idx;
+	size_t line_num = 0;
 	FILE *merged_cfg_fp;
 	struct lc_cfg_item *pos;
 
@@ -30,7 +31,8 @@ static int lc_output_merged_cfg_to_file(struct lc_cfg_list *cfg_list,
 	lc_list_for_each_entry(pos, &cfg_list->node, struct lc_cfg_item, node) {
 
 		char_idx = 0;
-		if (!pos->enable) {
+		/* write the comment line to file */
+		if (!pos->enable || line_num == 0) {
 			line_buffer[char_idx++] = '#';
 			line_buffer[char_idx++] = ' ';
 		}
@@ -60,6 +62,20 @@ static int lc_output_merged_cfg_to_file(struct lc_cfg_list *cfg_list,
 
 		/* write the line to file */
 		fwrite(line_buffer, char_idx, 1, merged_cfg_fp);
+
+		/* write the value to file */
+		if (!pos->enable) {
+			char_idx = 0;
+			/* copy variable name to line buffer */
+			memcpy(line_buffer, pos->name, pos->name_len);
+			char_idx += pos->name_len;
+			memcpy(line_buffer + char_idx, " = n\n", 5);
+			char_idx += 5;
+			/* write the line to file */
+			fwrite(line_buffer, char_idx, 1, merged_cfg_fp);
+		}
+
+		line_num++;
 	}
 
 	fclose(merged_cfg_fp);
@@ -73,24 +89,14 @@ static int lc_output_merged_cfg_to_file(struct lc_cfg_list *cfg_list,
  * @param mk_file_name: makefile name.
  * @param head_file_name: header config file name.
  * @param merged_cfg_file_name: merged config file name.
- * @param merged_default_cfg_file_name: merged default config file name.
  * 
  * @return: zero for success, otherwise failed.
  ************************************************************************************/
 int light_config_output_cfg_to_file(struct lc_ctrl_blk *ctrl_blk,
                           char *mk_file_name, char *head_file_name,
-                          char *merged_menu_cfg_file_name,
-                          char *merged_default_cfg_file_name)
+                          char *merged_menu_cfg_file_name)
 {
 	int ret;
-
-	/* output the default configuration item to file */
-	ret = lc_output_merged_cfg_to_file(&ctrl_blk->default_cfg_head,
-	            ctrl_blk->temp_buff, merged_default_cfg_file_name);
-	if (ret < 0) {
-		printf("Out default cfg to file failed, ret:%d\n", ret);
-		return ret;
-	}
 
 	/* output the menu configuration item to file */
 	ret = lc_output_merged_cfg_to_file(&ctrl_blk->menu_cfg_head,
