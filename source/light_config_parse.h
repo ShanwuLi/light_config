@@ -8,7 +8,7 @@
 //#define LC_DEBUG
 #define LC_INC_FILES_NUM_MAX               (102400)
 #define LC_CFG_ITEMS_CACHE_LINE_NUM        (512)
-#define LC_LINE_BUFF_SIZE_MIN              (4096)
+#define LC_LINE_BUFF_SIZE_MIN              (2048)
 #define LC_LINE_BUFF_SIZE_MAX              (8192)
 #define LC_MEM_UPLIMIT                     (128 * 1024 * 1024)
 
@@ -23,6 +23,33 @@
 #define lc_err(fmt, ...)                   printf("Error: "fmt, ##__VA_ARGS__)
 
 #define lc_exit(ret)                       exit(ret)
+
+
+#define container_of(ptr, struct_type, member) \
+	((struct_type *)((char *)(ptr) - (char *)(&(((struct_type *)0)->member))))
+
+#define lc_list_next_entry(entry, entry_type, member) \
+	container_of((entry)->member.next, entry_type, member)
+
+#define lc_list_for_each_entry(pos, list_head, entry_type, member) \
+	for ((pos) = container_of((list_head)->next, entry_type, member); \
+	     &(pos)->member != (list_head); \
+	     (pos) = container_of((pos)->member.next, entry_type, member))
+
+#define lc_list_for_each_entry_safe(pos, temp, list_head, entry_type, member) \
+	for ((pos) = container_of((list_head)->next, entry_type, member), \
+	     (temp) = lc_list_next_entry(pos, entry_type, member); \
+	     &(pos)->member != (list_head); \
+	     (pos) = (temp), (temp) = lc_list_next_entry((temp), entry_type, member))
+
+#define lc_list_for_each_entry_reverse(pos, list_head, entry_type, member) \
+	for ((pos) = container_of((list_head)->prev, entry_type, member); \
+	     &(pos)->member != (list_head); \
+	     (pos) = container_of((pos)->member.prev, entry_type, member))
+
+#define lc_list_first_entry(head, entry_type, member) \
+	container_of((head)->next, entry_type, member)
+
 
 struct lc_ctrl_blk;
 struct lc_parse_ctrl_blk;
@@ -172,6 +199,20 @@ struct lc_parse_ctrl_blk {
 };
 
 /*************************************************************************************
+ * @brief: list node init.
+ * @param node: node of list.
+ * @return none.
+ ************************************************************************************/
+void lc_list_init(struct lc_list_node *node);
+
+/*************************************************************************************
+ * @brief: Determine whether this list is empty.
+ * @param node: node of list.
+ * @return none.
+ ************************************************************************************/
+bool lc_list_is_empty(struct lc_list_node *head);
+
+/*************************************************************************************
  * @brief: init .
  *
  * @ctrl_blk: control block.
@@ -206,5 +247,4 @@ int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
  ************************************************************************************/
 void lc_dump_cfg(struct lc_cfg_list *cfg_head);
 
-
-#endif
+#endif /* __LIGHT_CONFIG_H__ */

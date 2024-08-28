@@ -8,7 +8,8 @@ DIR_GUARD = @$(MKDIR) $(@D)
 
 # Define the source files, object files, and the final executable name
 SRCS= main.c light_config_parse.c logic_expr_parse.c \
-      light_config_parse_sm.c light_config_parse_func.c
+      light_config_parse_sm.c light_config_parse_func.c \
+      light_config_output.c
 
 
 C_OBJS_TMP = $(patsubst %.c,%.o,$(SRCS))

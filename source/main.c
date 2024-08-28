@@ -4,6 +4,7 @@
 #include <time.h>
 #include "logic_expr_parse.h"
 #include "light_config_parse.h"
+#include "light_config_output.h"
 
 static struct lc_ctrl_blk lc_cb;
 
@@ -42,14 +43,17 @@ int main(int argc, char *argv[])
 	printf("menu cfg dump:\n\n\n");
 	lc_dump_cfg(&lc_cb.menu_cfg_head);
 
+	ret = light_config_output_cfg_to_file(&lc_cb, "mk.mk", "head.h",
+	                       "merged_menu.cfg", "merged_default.cfg");
+	if (ret < 0) {
+		lc_err("Fail to output cfg file, ret:%d\n", ret);
+		return ret;
+	}
+
 	/* get the time */
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
 	printf("end: %s", asctime(timeinfo));
-
-
-
-
 
 	return ret;
 }

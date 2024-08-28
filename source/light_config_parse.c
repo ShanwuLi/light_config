@@ -8,31 +8,6 @@
 #include "light_config_parse_sm.h"
 #include "light_config_parse_func.h"
 
-#define container_of(ptr, struct_type, member) \
-	((struct_type *)((char *)(ptr) - (char *)(&(((struct_type *)0)->member))))
-
-#define lc_list_next_entry(entry, entry_type, member) \
-	container_of((entry)->member.next, entry_type, member)
-
-#define lc_list_for_each_entry(pos, list_head, entry_type, member) \
-	for ((pos) = container_of((list_head)->next, entry_type, member); \
-	     &(pos)->member != (list_head); \
-	     (pos) = container_of((pos)->member.next, entry_type, member))
-
-#define lc_list_for_each_entry_safe(pos, temp, list_head, entry_type, member) \
-	for ((pos) = container_of((list_head)->next, entry_type, member), \
-	     (temp) = lc_list_next_entry(pos, entry_type, member); \
-	     &(pos)->member != (list_head); \
-	     (pos) = (temp), (temp) = lc_list_next_entry((temp), entry_type, member))
-
-#define lc_list_for_each_entry_reverse(pos, list_head, entry_type, member) \
-	for ((pos) = container_of((list_head)->prev, entry_type, member); \
-	     &(pos)->member != (list_head); \
-	     (pos) = container_of((pos)->member.prev, entry_type, member))
-
-#define lc_list_first_entry(head, entry_type, member) \
-	container_of((head)->next, entry_type, member)
-
 /*************************************************************************************
  * @brief: parse line and get the hash value (murmur2 Hash Function).
  * 
@@ -85,7 +60,7 @@ uint64_t murmur_hash2_64a(void *str)
  * @param node: node of list.
  * @return none.
  ************************************************************************************/
-static void lc_list_init(struct lc_list_node *node)
+void lc_list_init(struct lc_list_node *node)
 {
 	node->next = node;
 	node->prev = node;
@@ -96,7 +71,7 @@ static void lc_list_init(struct lc_list_node *node)
  * @param node: node of list.
  * @return none.
  ************************************************************************************/
-static bool lc_list_is_empty(struct lc_list_node *head)
+bool lc_list_is_empty(struct lc_list_node *head)
 {
 	if (head->next == head || head->prev == head)
 		return true;
