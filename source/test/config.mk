@@ -1,0 +1,16 @@
+LC_TOPDIR = F:\light_config\source\test
+dehfh = y
+ZZ ?= fwefefwe
+UU := wgwg
+afasgasg = n
+dhwjhjweh += y
+BAUD ?= 115200
+CSRC = 115200
+TDWUEFYUEWYF = wggww
+SOURCE = CSRC/ZZ/YYwggww
+gwgewhwh = n
+dhwejkc = 125235
+dwjekwje += flek
+CXXSRC = F:\light_config\source\test/CSRC/ZZ/YYwggww/dhwehe.c
+CXXSRC += F:\light_config\source\test/CSRC/ZZ/YYwggwwtest.c
+CXXSRC += F:\light_config\source\test/CSRC/ZZ/YYwggww/dwefewvewve.c

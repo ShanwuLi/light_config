@@ -8,6 +8,7 @@
 		"light_config_parse_sm.h": "c",
 		"type_traits": "c",
 		"light_config_parse_func.h": "c",
-		"string.h": "c"
+		"string.h": "c",
+		"light_config_output.h": "c"
 	}
 }

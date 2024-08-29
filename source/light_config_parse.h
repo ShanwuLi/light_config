@@ -84,6 +84,11 @@ enum lc_assign_type {
 	LC_ASSIGN_TYPE_ADDITION,     /* += */
 };
 
+enum lc_value_type {
+	LC_VALUE_TYPE_NORMAL,        /* macro =  xxx */
+	LC_VALUE_TYPE_MENU,          /* macro = [xxx] & */
+};
+
 struct lc_list_node {
 	struct lc_list_node *next;
 	struct lc_list_node *prev;
@@ -91,7 +96,8 @@ struct lc_list_node {
 
 struct lc_cfg_item {
 	bool enable;
-	uint16_t assign_type;
+	uint8_t assign_type;
+	uint8_t value_type;
 	uint16_t name_len;
 	uint16_t value_len;
 	uint64_t name_hashval;
@@ -177,8 +183,8 @@ struct lc_ctrl_blk {
 struct lc_parse_ctrl_blk {
 	bool item_en;
 	bool ref_en;
-	int match_state;
-	int select;
+	int8_t match_state;
+	int8_t select;
 	int char_idx;
 	int name_idx;
 	int value_idx;
@@ -190,7 +196,8 @@ struct lc_parse_ctrl_blk {
 	int ref_name_idx;
 	int curr_state;
 	int next_state;
-	uint16_t assign_type;
+	uint8_t assign_type;
+	uint8_t value_type;
 	parse_func_t parse_elem_start;
 	parse_func_t parsing_elem;
 	parse_func_t parse_elem_end;

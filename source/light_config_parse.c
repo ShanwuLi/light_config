@@ -381,7 +381,7 @@ static void *lc_malloc(struct lc_ctrl_blk *ctrl_blk, int size)
  ************************************************************************************/
 static int lc_add_cfg_item(struct lc_ctrl_blk *ctrl_blk, struct lc_list_node *cfg_head,
                            char *name, uint16_t name_len, char *value, uint16_t value_len,
-                           uint16_t assign_type, bool enable)
+                           uint8_t assign_type, uint8_t value_type, bool enable)
 {
 	uint32_t mem_size;
 	struct lc_cfg_item *cfg_item;
@@ -413,6 +413,7 @@ static int lc_add_cfg_item(struct lc_ctrl_blk *ctrl_blk, struct lc_list_node *cf
 	cfg_item->value_len = value_len;
 	cfg_item->name_hashval = murmur_hash2_64a(name);
 	cfg_item->assign_type = assign_type;
+	cfg_item->value_type = value_type;
 	cfg_item->enable = enable;
 	memcpy(cfg_item->name, name, name_len);
 	memcpy(cfg_item->value, value, value_len);
@@ -444,7 +445,8 @@ static int lc_cfg_items_init(struct lc_ctrl_blk *ctrl_blk)
 	ret = lc_add_cfg_item(ctrl_blk, &ctrl_blk->default_cfg_head.node,
 	                     "LC_TOPDIR", 9, ctrl_blk->temp_buff,
 	                      strlen(ctrl_blk->temp_buff),
-	                      LC_ASSIGN_TYPE_DIRECT, true);
+	                      LC_ASSIGN_TYPE_DIRECT,
+	                      LC_VALUE_TYPE_NORMAL, true);
 	if (ret < 0) {
 		lc_err("LC_TOPDIR item add fail\n");
 		return ret;
@@ -454,7 +456,8 @@ static int lc_cfg_items_init(struct lc_ctrl_blk *ctrl_blk)
 	ret = lc_add_cfg_item(ctrl_blk, &ctrl_blk->menu_cfg_head.node,
 	                     "LC_TOPDIR", 9, ctrl_blk->temp_buff,
 	                      strlen(ctrl_blk->temp_buff),
-	                      LC_ASSIGN_TYPE_DIRECT, true);
+	                      LC_ASSIGN_TYPE_DIRECT,
+	                      LC_VALUE_TYPE_NORMAL, true);
 	if (ret < 0) {
 		lc_err("LC_TOPDIR item add fail\n");
 		return ret;
@@ -683,6 +686,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			if (is_default_cfg)
 				return -cb.next_state - 1;
 			cb.value_idx = 0;
+			cb.value_type = LC_VALUE_TYPE_MENU;
 			break;
 
 		case 101:
@@ -880,7 +884,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			}
 			ret = lc_add_cfg_item(ctrl_blk, &cfg_list->node, ctrl_blk->item_name_buff,
 			                      cb.name_idx, ctrl_blk->item_value_buff, cb.value_idx,
-			                      cb.assign_type, cb.item_en);
+			                      cb.assign_type, cb.value_type, cb.item_en);
 			return LC_PARSE_RES_OK_NORMAL_CFG;
 
 		case LC_PARSE_STATE_INCLUDE:
@@ -891,7 +895,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			ctrl_blk->item_value_buff[cb.value_idx] = '\0';
 			ret = lc_add_cfg_item(ctrl_blk, &cfg_list->node, ctrl_blk->item_name_buff,
 			                     cb.name_idx, ctrl_blk->item_value_buff, cb.value_idx,
-			                     cb.assign_type, cb.item_en);
+			                     cb.assign_type, cb.value_type, cb.item_en);
 			return LC_PARSE_RES_OK_NORMAL_CFG;
 		}
 

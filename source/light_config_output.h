@@ -3,18 +3,25 @@
 
 #include "light_config_parse.h"
 
+struct lc_output_file_info {
+	char *name;
+	char *content_prefix;
+	char *content_suffix;
+};
+
 /*************************************************************************************
  * @brief: output cfg item to merged, makefile and header config file.
  * 
  * @param ctrl_blk: control block.
- * @param mk_file_name: makefile name.
- * @param head_file_name: header config file name.
- * @param merged_cfg_file_name: merged config file name.
+ * @param merged_menu_cfg_file: output merged config file info.
+ * @param mk_file: output makefile info.
+ * @param header_file: output header config file info.
  * 
  * @return: zero for success, otherwise failed.
  ************************************************************************************/
 int light_config_output_cfg_to_file(struct lc_ctrl_blk *ctrl_blk,
-                          char *mk_file_name, char *head_file_name,
-                          char *merged_menu_cfg_file_name);
+                 struct lc_output_file_info merged_menu_cfg_file,
+                 struct lc_output_file_info mk_file,
+                 struct lc_output_file_info header_file);
 
 #endif

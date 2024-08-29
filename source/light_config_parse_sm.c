@@ -223,6 +223,8 @@ int lc_parse_state_get_next(int current_state, char ch)
 	case 103:
 		if (ch == '<')
 			return 101;
+		if (ch == ']')
+			return 7050;
 		return 104;
 
 	case 104:

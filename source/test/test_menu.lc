@@ -4,15 +4,23 @@ dehfh    = y
 IO     += ["string  A", "string   B", "stri   ngC"]
 ZZ     ?= fwefefwe
 UU     := wgwg
-UU     = wggweg
+afasgasg     = n
+
+
+dhwjhjweh += [] & <UU>
 
 BAUD   ?= [@menu([9600], [11520], [115200])] & (<ZZ> & !<IO> | \
                                            <UU>)
-CSRC   := n
+CSRC   =   [<BAUD>]
 TDWUEFYUEWYF = wggww
 
 SOURCE-<dehfh> = CSRC/ZZ/YY<TDWUEFYUEWYF>
 gwgewhwh  = [*] & !<dehfh>
-dhwejkc += [@<CSRC> ? ([125235], [0325362])] & <CSRC>
+dhwejkc = [@<CSRC> ? ([125235], [0325362])]
 
 dwjekwje += flek
+
+CXXSRC-<dhwejkc> = <LC_TOPDIR>/<SOURCE>/dhwehe.c
+CXXSRC-<UU> += <LC_TOPDIR>/<SOURCE>test.c
+CXXSRC += <LC_TOPDIR>/<SOURCE>/dwefewvewve.c
+
