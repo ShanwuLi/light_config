@@ -254,4 +254,13 @@ int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
  ************************************************************************************/
 void lc_dump_cfg(struct lc_cfg_list *cfg_head);
 
+/*************************************************************************************
+ * @brief: free memory.
+ *
+ * @param ctrl_blk: control block.
+ *
+ * @return: cfg_item.
+ ************************************************************************************/
+void light_config_free(struct lc_ctrl_blk *ctrl_blk);
+
 #endif /* __LIGHT_CONFIG_H__ */

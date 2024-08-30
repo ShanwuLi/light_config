@@ -3,10 +3,11 @@
 
 #define LC_TOPDIR F:\light_config\source\test
 #define dehfh
-#define CSRC 115200
+#define CSRC 9600
 #define TDWUEFYUEWYF wggww
 #define SOURCE CSRC/ZZ/YYwggww
 #define dhwejkc 125235
-#define CXXSRC F:\light_config\source\test/CSRC/ZZ/YYwggww/dhwehe.c
+#define OS_TOPDIR .
+#define CXXSRC ./dhwehe.c
 
 #endif /* __CONFIG_H__ */

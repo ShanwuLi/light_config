@@ -19,7 +19,7 @@ uint64_t murmur_hash2_64a(void *str)
 {
 	int len = strlen(str);
 	uint64_t seed = 21788233;
-	unsigned char * data2;
+	unsigned char *data2;
 	uint64_t m = 0xc6a4a7935bd1e995LLU;
 	int r = 47;
 	uint64_t h = seed ^ (len * m);
@@ -317,7 +317,7 @@ static void lc_cb_init(struct lc_ctrl_blk *ctrl_blk, size_t line_buff_size,
 	ctrl_blk->mem_blk_ctrl.curr_blk_rest = 0;
 	ctrl_blk->mem_blk_ctrl.ptr = NULL;
 
-	ctrl_blk->cfg_file_stk.depth = cfg_file_num_max + 8;
+	ctrl_blk->cfg_file_stk.depth = cfg_file_num_max;
 	ctrl_blk->cfg_file_stk.sp = 0;
 	ctrl_blk->cfg_file_stk.item_stk = cfg_file_stk;
 
