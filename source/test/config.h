@@ -1,7 +1,7 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#define LC_TOPDIR F:\light_config\source\test
+#define LC_TOPDIR F:/light_config/source/test
 #define dehfh
 #define CSRC 9600
 #define TDWUEFYUEWYF wggww

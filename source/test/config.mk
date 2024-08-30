@@ -1,4 +1,4 @@
-LC_TOPDIR = F:\light_config\source\test
+LC_TOPDIR = F:/light_config/source/test
 dehfh = y
 ZZ ?= fwefefwe
 UU := wgwg
@@ -15,8 +15,3 @@ OS_TOPDIR = .
 CXXSRC = ./dhwehe.c
 CXXSRC += ./test.c
 CXXSRC += ./dwefewvewve.c
-SUBDIR ?= subtest
-CXXSRC += subtest/dwefewvewve.c
-CXXSRC += subtest/etery.c
-CXXSRC += subtest/eywwyryr.c
-CXXSRC += subtest/erhetjrtjtjrt.c
