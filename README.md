@@ -20,6 +20,11 @@
 3.  查看解析后生成的配置文件
 
 #### 配置文件语法
+##### menu config保留字
+1. '<'和'>', 使用<name>来引用前面定义的宏值
+2. '['和']'，使用[xxx]来依赖，同时引用default中的值，若找不到default中的值，则使用menuconfig中定义的默认值
+3. '-include'，使用-include <file>来引用其他配置文件
+
 ##### menu config语法
 menu config用于定义宏，其语法主要包含3部分，分别为
 1. 宏名称
