@@ -17,7 +17,7 @@
 
 1.  在test目录下使用./light_config --help
 2.  按照help指引输入指定参数，也可采用默认参数
-3.  查看解析后的配置文件
+3.  查看解析后生成的配置文件
 
 #### 配置文件语法
 ##### menu config语法
@@ -47,7 +47,9 @@ menu config的语法主要包含3部分，分别为
 一个逻辑运算表达式，并将其用于依赖构建。
 
 ##### default config语法
-default config用于选择或使能menu config中的宏，从而完成配置文件的依赖构建。
+default config用于选择或使能menu config中的宏，从而完成配置文件的依赖构建。在default config中，
+只能使用"="类型的赋值符来对宏进行赋值，但是在生成配置文件时，仍会根据menu config中的赋值符来决定
+是否生成makefile文件或头文件中的宏。
 
 #### 配置文件实例
 ```makefile
@@ -62,6 +64,7 @@ CONFIG_BAUD_STOP_BIT          = [@menu([1], [1.5], [2])]           & (<CONFIG_ME
 CONFIG_UART_NAME              = [*]                                & <UART_EN>
 CONFIG_UART_OTHER-<DEFALUT>   = [*] & (!(<CONFIG_MENU> & <CONFIG_UART>) | <UART_EN>)
 CONFIG_TEST_NAME              = [@<DEFALUT> ? (["default_name"], ["other_name"])] & <UART_EN>
+CONFIG_TEST_NUM               = [@range([1], [200])] & <UART_EN>
 
 SUB_DIR                       = <OS_TOPDIR>/subdir
 -include                       "<SUB_DIR>/subcfg.lc"
@@ -81,6 +84,7 @@ CONFIG_BAUD_RATE              = 115200
 CONFIG_BAUD_STOP_BIT          = 2
 CONFIG_UART_NAME              = "stm32f103 uart1"
 CONFIG_UART_OTHER             = "other_name"
+CONFIG_TEST_NUM               = 5
 
 ```
 
