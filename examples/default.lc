@@ -1,0 +1,7 @@
+# "default config"
+CONFIG_UART                   = "INSTAED_LOGO"
+UART_EN                       = y
+CONFIG_BAUD_RATE              = 115200
+CONFIG_BAUD_STOP_BIT          = 2
+CONFIG_UART_NAME              = "stm32f103 uart1"
+CONFIG_UART_OTHER             = "other_name"

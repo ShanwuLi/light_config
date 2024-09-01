@@ -63,20 +63,25 @@ CONFIG_UART_NAME              = [*]                                & <UART_EN>
 CONFIG_UART_OTHER-<DEFALUT>   = [*]                                & <UART_EN>
 CONFIG_TEST_NAME              = [@<DEFALUT> ? (["default_name"], ["other_name"])] & <UART_EN>
 
+SUB_DIR                       = <OS_TOPDIR>/subdir
+-include "<SUB_DIR>/subcfg.lc"
+
 CSRCS-<UART_EN> += <OS_TOPDIR>/uart.c
 ASMCSRCS-<UART_EN> += <OS_TOPDIR>/uart_asm.S
 CXXSRC += <OS_TOPDIR>/menu.cpp
+
 ```
 
 
 ```makefile
 # "default config"
 CONFIG_UART                   = "INSTAED_LOGO"
-UART_EN                       = n
+UART_EN                       = y
 CONFIG_BAUD_RATE              = 115200
 CONFIG_BAUD_STOP_BIT          = 2
 CONFIG_UART_NAME              = "stm32f103 uart1"
-CONFIG_UART_OTHER-<DEFALUT>   = "other_name"
+CONFIG_UART_OTHER             = "other_name"
+
 ```
 
 
