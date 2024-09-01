@@ -74,27 +74,27 @@ static struct lc_args g_lc_args[] = {
 	{
 		.name = "--menu_cfg",
 		.value = "menu.lc",
-		.desc = "specify menu config file, menu.lc is default",
+		.desc = "specify menu config file, menu.lc as default",
 	},
 	{
 		.name = "--default_cfg",
 		.value = "default.lc",
-		.desc = "specify default config file, default.lc is default",
+		.desc = "specify default config file, default.lc as default",
 	},
 	{
 		.name = "--out_merged_cfg",
 		.value = NULL,
-		.desc = "specify merged config file",
+		.desc = "specify merged config file, .lc as default",
 	},
 	{
 		.name = "--out_mk_file",
 		.value = NULL,
-		.desc = "specify output mk file",
+		.desc = "specify output mk file, config.mk as default",
 	},
 	{
 		.name = "--out_h_file",
 		.value = NULL,
-		.desc = "specify output header file",
+		.desc = "specify output header file, config.h as default",
 	},
 };
 
