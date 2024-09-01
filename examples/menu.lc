@@ -5,9 +5,9 @@ DEFALUT                       = y
 CONFIG_UART                   = ["LOGO"] & <CONFIG_MENU>
 UART_EN                       = [] & (<CONFIG_MENU> & <CONFIG_UART>)
 CONFIG_BAUD_RATE              = [@menu([9600], [11520], [115200])] & <UART_EN>
-CONFIG_BAUD_STOP_BIT          = [@menu([1], [1.5], [2])]           & <UART_EN>
+CONFIG_BAUD_STOP_BIT          = [@menu([1], [1.5], [2])]           & (<CONFIG_MENU> & <CONFIG_UART>)
 CONFIG_UART_NAME              = [*]                                & <UART_EN>
-CONFIG_UART_OTHER-<DEFALUT>   = [*]                                & <UART_EN>
+CONFIG_UART_OTHER-<DEFALUT>   = [*] & (!(<CONFIG_MENU> & <CONFIG_UART>) | <UART_EN>)
 CONFIG_TEST_NAME              = [@<DEFALUT> ? (["default_name"], ["other_name"])] & <UART_EN>
 
 SUB_DIR                       = <OS_TOPDIR>/subdir
