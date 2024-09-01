@@ -64,7 +64,7 @@ CONFIG_UART_OTHER-<DEFALUT>   = [*]                                & <UART_EN>
 CONFIG_TEST_NAME              = [@<DEFALUT> ? (["default_name"], ["other_name"])] & <UART_EN>
 
 SUB_DIR                       = <OS_TOPDIR>/subdir
--include "<SUB_DIR>/subcfg.lc"
+-include                      "<SUB_DIR>/subcfg.lc"
 
 CSRCS-<UART_EN> += <OS_TOPDIR>/uart.c
 ASMCSRCS-<UART_EN> += <OS_TOPDIR>/uart_asm.S
