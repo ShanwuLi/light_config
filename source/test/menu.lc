@@ -27,3 +27,5 @@ OS_TOPDIR = .
 CXXSRC-<dhwejkc> = <OS_TOPDIR>/dhwehe.c
 CXXSRC-<UU> += <OS_TOPDIR>/test.c
 CXXSRC += <OS_TOPDIR>/dwefewvewve.c
+
+-include "test_default.cfg"
