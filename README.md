@@ -66,9 +66,9 @@ CONFIG_TEST_NAME              = [@<DEFALUT> ? (["default_name"], ["other_name"])
 SUB_DIR                       = <OS_TOPDIR>/subdir
 -include                       "<SUB_DIR>/subcfg.lc"
 
-CSRCS-<UART_EN> += <OS_TOPDIR>/uart.c
-ASMCSRCS-<UART_EN> += <OS_TOPDIR>/uart_asm.S
-CXXSRC += <OS_TOPDIR>/menu.cpp
+CSRCS-<UART_EN>               += <OS_TOPDIR>/uart.c
+ASMCSRCS-<UART_EN>            += <OS_TOPDIR>/uart_asm.S
+CXXSRC                        += <OS_TOPDIR>/menu.cpp
 
 ```
 
