@@ -21,9 +21,11 @@
 
 #### 配置文件语法
 ##### menu config保留字
-1. '<'和'>', 使用\<name\>来引用前面定义的宏值
-2. '['和']'，使用[xxx]来引用default中的值，若找不到default中的值，则使用menuconfig中定义的默认值，同时进行逻辑依赖
-3. '-include'，使用-include <file>来引用其他配置文件
+1. 'y'和'n'，用来表示是否启用某配置，一般用于default config里面，当然也可以用于menu config里面
+2. '<'和'>', 使用\<name\>来引用前面定义的宏值
+3. '['和']'，使用[xxx]来引用default中的值，若找不到default中的值，则使用menuconfig中定义的默认值，同时进行逻辑依赖
+4. '@'，用来调用函数或者三目运算符，语法: [@func([arg1], [arg2], ...)] 或 [@<macro_name> ? ([true_val], [false_val])]
+5. '-include'，使用-include <file>来引用其他配置文件
 
 ##### menu config语法
 menu config用于定义宏，其语法主要包含3部分，分别为

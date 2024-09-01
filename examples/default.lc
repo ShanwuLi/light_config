@@ -1,6 +1,6 @@
 # "default config"
 CONFIG_UART                   = "INSTAED_LOGO"
-UART_EN                       = y
+UART_EN                       = n
 CONFIG_BAUD_RATE              = 115200
 CONFIG_BAUD_STOP_BIT          = 2
 CONFIG_UART_NUM               = <CONFIG_BAUD_STOP_BIT>5
