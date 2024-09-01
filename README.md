@@ -50,7 +50,34 @@ menu config的语法主要包含3部分，分别为
 default config用于选择或使能menu config中的宏，从而完成配置文件的依赖构建。
 
 #### 配置文件实例
+```makefile
+# "menu config"
+OS_TOPDIR                     = .
+CONFIG_MENU                   = y
+DEFALUT                       = y
+CONFIG_UART                   = ["LOGO"] & <CONFIG_MENU>
+UART_EN                       = [] & (<CONFIG_MENU> & <CONFIG_UART>)
+CONFIG_BAUD_RATE              = [@menu([9600], [11520], [115200])] & <UART_EN>
+CONFIG_BAUD_STOP_BIT          = [@menu([1], [1.5], [2])]           & <UART_EN>
+CONFIG_UART_NAME              = [*]                                & <UART_EN>
+CONFIG_UART_OTHER-<DEFALUT>   = [*]                                & <UART_EN>
+CONFIG_TEST_NAME              = [@<DEFALUT> ? (["default_name"], ["other_name"])] & <UART_EN>
 
+CSRCS-<UART_EN> += <OS_TOPDIR>/uart.c
+ASMCSRCS-<UART_EN> += <OS_TOPDIR>/uart_asm.S
+CXXSRC += <OS_TOPDIR>/menu.cpp
+```
+
+
+```makefile
+# "default config"
+CONFIG_UART                   = "INSTAED_LOGO"
+UART_EN                       = n
+CONFIG_BAUD_RATE              = 115200
+CONFIG_BAUD_STOP_BIT          = 2
+CONFIG_UART_NAME              = "stm32f103 uart1"
+CONFIG_UART_OTHER-<DEFALUT>   = "other_name"
+```
 
 
 
