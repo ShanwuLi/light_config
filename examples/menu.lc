@@ -8,11 +8,12 @@ CONFIG_BAUD_RATE              = [@menu([9600], [11520], [115200])] & <UART_EN>
 CONFIG_BAUD_STOP_BIT          = [@menu([1], [1.5], [2])]           & (<CONFIG_MENU> & <CONFIG_UART>)
 CONFIG_UART_NAME              = [*]                                & <UART_EN>
 CONFIG_UART_OTHER-<DEFALUT>   = [*] & (!(<CONFIG_MENU> & <CONFIG_UART>) | <UART_EN>)
-CONFIG_TEST_NAME              = [@<DEFALUT> ? (["default_name"], ["other_name"])] & <UART_EN>
+CONFIG_TEST_NUM               = [@<DEFALUT> ? (["default_name"], ["other_name"])] & <UART_EN>
+CONFIG_UART_NUM               = [*]
 
 SUB_DIR                       = <OS_TOPDIR>/subdir
 -include                       "<SUB_DIR>/subcfg.lc"
 
-CSRCS-<UART_EN> += <OS_TOPDIR>/uart.c
-ASMCSRCS-<UART_EN> += <OS_TOPDIR>/uart_asm.S
-CXXSRC += <OS_TOPDIR>/menu.cpp
+CSRCS-<UART_EN>               += <OS_TOPDIR>/uart.c
+ASMCSRCS-<UART_EN>            += <OS_TOPDIR>/uart_asm.S
+CXXSRC                        += <OS_TOPDIR>/menu.cpp

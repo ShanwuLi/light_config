@@ -22,7 +22,7 @@
 #### 配置文件语法
 ##### menu config保留字
 1. '<'和'>', 使用\<name\>来引用前面定义的宏值
-2. '['和']'，使用[xxx]来依赖，同时引用default中的值，若找不到default中的值，则使用menuconfig中定义的默认值
+2. '['和']'，使用[xxx]来引用default中的值，若找不到default中的值，则使用menuconfig中定义的默认值，同时进行逻辑依赖
 3. '-include'，使用-include <file>来引用其他配置文件
 
 ##### menu config语法
@@ -69,13 +69,12 @@ CONFIG_BAUD_STOP_BIT          = [@menu([1], [1.5], [2])]           & (<CONFIG_ME
 CONFIG_UART_NAME              = [*]                                & <UART_EN>
 CONFIG_UART_OTHER-<DEFALUT>   = [*] & (!(<CONFIG_MENU> & <CONFIG_UART>) | <UART_EN>)
 CONFIG_TEST_NAME              = [@<DEFALUT> ? (["default_name"], ["other_name"])] & <UART_EN>
-CONFIG_TEST_NUM               = [@range([1], [200])] & <UART_EN>
 
 SUB_DIR                       = <OS_TOPDIR>/subdir
 -include                       "<SUB_DIR>/subcfg.lc"
 
 CSRCS-<UART_EN>               += <OS_TOPDIR>/uart.c
-ASMCSRCS-n                    += <OS_TOPDIR>/uart_asm.S
+ASMCSRCS-<UART_EN>            += <OS_TOPDIR>/uart_asm.S
 CXXSRC                        += <OS_TOPDIR>/menu.cpp
 
 ```
@@ -83,13 +82,14 @@ CXXSRC                        += <OS_TOPDIR>/menu.cpp
 
 ```makefile
 # "default config"
+# "default config"
 CONFIG_UART                   = "INSTAED_LOGO"
 UART_EN                       = y
 CONFIG_BAUD_RATE              = 115200
 CONFIG_BAUD_STOP_BIT          = 2
+CONFIG_TEST_NUM               = <CONFIG_BAUD_STOP_BIT>5
 CONFIG_UART_NAME              = "stm32f103 uart1"
 CONFIG_UART_OTHER             = "other_name"
-CONFIG_TEST_NUM               = 5
 
 ```
 

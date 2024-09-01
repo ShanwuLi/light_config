@@ -34,7 +34,8 @@ SOFTWARE.
 #define CONFIG_BAUD_STOP_BIT 2
 #define CONFIG_UART_NAME "stm32f103 uart1"
 #define CONFIG_UART_OTHER "other_name"
-#define CONFIG_TEST_NAME "default_name"
+#define CONFIG_TEST_NUM "default_name"
+#define CONFIG_UART_NUM 25
 #define SUB_DIR ./subdir
 
 #endif /* __CONFIG_H__*/

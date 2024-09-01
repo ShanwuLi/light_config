@@ -742,7 +742,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			                    ctrl_blk->item_value_buff, ctrl_blk->item_name_buff);
 			if (ret < 0) {
 				lc_err("Error: ref macro[%s] not found in %s line %llu, col %llu\n",
-				        ctrl_blk->item_name_buff, ctrl_blk->default_cfg_head.name,
+				        ctrl_blk->item_name_buff, ctrl_blk->file_name_buff,
 				        line_num, ctrl_blk->colu_num);
 				return ret;
 			}
