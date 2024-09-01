@@ -276,6 +276,13 @@ int lc_parsing_elem_func_range(struct lc_ctrl_blk *ctrl_blk,
 int lc_parse_elem_end_func_range(struct lc_ctrl_blk *ctrl_blk,
                        struct lc_parse_ctrl_blk *pcb, char ch)
 {
+	if (pcb->arr_elem_idx > 1) {
+		lc_err("Error: item[%s] has over 2 arguments of range func in %s line %llu, col %llu\n",
+		        pcb->default_item->name, ctrl_blk->file_name_buff, pcb->line_num,
+		        ctrl_blk->colu_num);
+		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
+	}
+
 	if (pcb->arr_elem_idx == 0) {
 		if (pcb->default_val < pcb->curr_val) {
 			lc_err("Error: %s out of range of item[%s] when parsing %s line %llu, col %llu\n",
