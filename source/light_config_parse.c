@@ -1021,7 +1021,7 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 
 		if (ret == LC_PARSE_RES_OK_INCLUDE) {
 			file_item->line_num = line_num;
-			file_item->position = ftell(fp);
+			fgetpos(fp, &file_item->position);
 			ret = lc_cfg_file_push(ctrl_blk, file_item);
 			if (ret < 0) {
 				lc_err("lc_cfg_file_push failed, ret:%d\n", ret);
@@ -1030,7 +1030,7 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 
 			inc_file_item.file_name = ctrl_blk->inc_path_buff;
 			inc_file_item.line_num = 0;
-			inc_file_item.position = 0;
+			memset(&inc_file_item.position, 0, sizeof(fpos_t));
 			ret = lc_cfg_file_push(ctrl_blk, &inc_file_item);
 			if (ret < 0) {
 				lc_err("lc_cfg_file_push failed, ret:%d\n", ret);
