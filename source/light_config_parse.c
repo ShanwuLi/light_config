@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include "logic_expr_parse.h"
 #include "light_config_parse.h"
@@ -188,7 +189,7 @@ void lc_dump_cfg(struct lc_cfg_list *cfg_head)
 	lc_list_for_each_entry(pos, &cfg_head->node, struct lc_cfg_item, node) {
 		lc_err("Error: name:%s, len:%d, en:%d, value:%s, len:%d, assign_type:%d, hash:0x%llx\n",
 		        pos->name, pos->name_len, pos->enable, pos->value, pos->value_len,
-		        pos->assign_type, pos->name_hashval);
+		        pos->assign_type, (ull_t)(pos->name_hashval));
 	}
 }
 
@@ -909,11 +910,14 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
  ************************************************************************************/
 static int lc_parse_check_params(struct lc_ctrl_blk *ctrl_blk, char *cfg_file)
 {
+	long int len;
+
 	if (cfg_file == NULL)
 		return LC_PARSE_RES_ERR_MEMORY_FAULT;
 
-	if (strlen(cfg_file) >= ctrl_blk->line_buff_size) {
-		lc_err("Error: file name is too long[%lld], please check it\n", strlen(cfg_file));
+	len = strlen(cfg_file);
+	if (len >= ctrl_blk->line_buff_size) {
+		lc_err("Error: file name is too long[%ld], please check it\n", len);
 		return LC_PARSE_RES_ERR_LINE_BUFF_OVERFLOW;
 	}
 
