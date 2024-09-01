@@ -20,7 +20,7 @@
 #define lc_warn(fmt, ...)                  ((void)fmt)
 #endif
 
-#define lc_err(fmt, ...)                   printf("Error: "fmt, ##__VA_ARGS__)
+#define lc_err(fmt, ...)                   printf(fmt, ##__VA_ARGS__)
 
 #define lc_exit(ret)                       exit(ret)
 

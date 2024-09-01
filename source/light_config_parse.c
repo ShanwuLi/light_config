@@ -109,13 +109,13 @@ static int lc_cfg_file_push(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_file_ite
 	struct lc_cfg_file_stk *stk = &(ctrl_blk->cfg_file_stk);
 
 	if (stk->sp >= stk->depth) {
-		lc_err("push fail, cfg file num[%lld] overflow[%lld]\n", stk->sp, stk->depth);
+		lc_err("Error: push fail, cfg file num[%lld] overflow[%lld]\n", stk->sp, stk->depth);
 		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
 	}
 	
 	name = malloc(strlen(item->file_name) + 1);
 	if (name == NULL) {
-		lc_err("malloc failed\n");
+		lc_err("Error: malloc failed\n");
 		return LC_PARSE_RES_ERR_MEMORY_FAULT;
 	}
 
@@ -141,7 +141,7 @@ static int lc_cfg_file_pop(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_file_item
 	struct lc_cfg_file_stk *stk = &(ctrl_blk->cfg_file_stk);
 
 	if (stk->sp < 0) {
-		lc_err("pop fial, cfg file num[%lld] overflow\n", stk->sp);
+		lc_err("Error: pop fial, cfg file num[%lld] overflow\n", stk->sp);
 		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
 	}
 
@@ -186,7 +186,7 @@ void lc_dump_cfg(struct lc_cfg_list *cfg_head)
 		return;
 
 	lc_list_for_each_entry(pos, &cfg_head->node, struct lc_cfg_item, node) {
-		lc_err("name:%s, len:%d, en:%d, value:%s, len:%d, assign_type:%d, hash:0x%llx\n",
+		lc_err("Error: name:%s, len:%d, en:%d, value:%s, len:%d, assign_type:%d, hash:0x%llx\n",
 		        pos->name, pos->name_len, pos->enable, pos->value, pos->value_len,
 		        pos->assign_type, pos->name_hashval);
 	}
@@ -387,7 +387,7 @@ static int lc_add_cfg_item(struct lc_ctrl_blk *ctrl_blk, struct lc_list_node *cf
 	struct lc_cfg_item *cfg_item;
 
 	if (name_len == 0) {
-		lc_err("name is null\n");
+		lc_err("Error: name is null\n");
 		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 	}
 
@@ -400,7 +400,7 @@ static int lc_add_cfg_item(struct lc_ctrl_blk *ctrl_blk, struct lc_list_node *cf
 	mem_size = sizeof(struct lc_cfg_item) + name_len + value_len;
 	cfg_item = lc_malloc(ctrl_blk, mem_size + sizeof(size_t));
 	if (cfg_item == NULL) {
-		lc_err("no mem to allocate cfg item\n");
+		lc_err("Error: no mem to allocate cfg item\n");
 		return LC_PARSE_RES_ERR_MEMORY_FAULT;
 	}
 
@@ -455,7 +455,7 @@ static int lc_cfg_items_init(struct lc_ctrl_blk *ctrl_blk)
 	                      LC_ASSIGN_TYPE_DIRECT,
 	                      LC_VALUE_TYPE_NORMAL, true);
 	if (ret < 0) {
-		lc_err("LC_TOPDIR item add fail\n");
+		lc_err("Error: LC_TOPDIR item add fail\n");
 		return ret;
 	}
 
@@ -466,7 +466,7 @@ static int lc_cfg_items_init(struct lc_ctrl_blk *ctrl_blk)
 	                      LC_ASSIGN_TYPE_DIRECT,
 	                      LC_VALUE_TYPE_NORMAL, true);
 	if (ret < 0) {
-		lc_err("LC_TOPDIR item add fail\n");
+		lc_err("Error: LC_TOPDIR item add fail\n");
 		return ret;
 	}
 
@@ -492,14 +492,14 @@ int light_config_init(struct lc_ctrl_blk *ctrl_blk, size_t mem_uplimit,
 	size_t mem_size;
 
 	if (ctrl_blk == NULL) {
-		lc_err("ctrl_blk is NULL\n");
+		lc_err("Error: ctrl_blk is NULL\n");
 		return LC_PARSE_RES_ERR_MEMORY_FAULT;
 	}
 
 	if ((line_buff_size < LC_LINE_BUFF_SIZE_MIN) ||
 	    (line_buff_size > LC_LINE_BUFF_SIZE_MAX) ||
 	    (mem_uplimit > LC_MEM_UPLIMIT)) {
-		lc_err("line_buff_size[%llu] or mem_uplimit[%llu] is too large\n",
+		lc_err("Error: line_buff_size[%llu] or mem_uplimit[%llu] is too large\n",
 		        line_buff_size, mem_uplimit);
 		return LC_PARSE_RES_ERR_LINE_BUFF_OVERFLOW;
 	}
@@ -507,7 +507,7 @@ int light_config_init(struct lc_ctrl_blk *ctrl_blk, size_t mem_uplimit,
 	mem_size = line_buff_size * 8 + cfg_file_num_max * sizeof(struct lc_cfg_file_item);
 	ctrl_blk->buff_pool = malloc(mem_size);
 	if (ctrl_blk->buff_pool == NULL) {
-		lc_err("malloc buff_pool[%llu bytes] failed\n", mem_size);
+		lc_err("Error: malloc buff_pool[%llu bytes] failed\n", mem_size);
 		return LC_PARSE_RES_ERR_MEMORY_FAULT;
 	}
 
@@ -518,7 +518,7 @@ int light_config_init(struct lc_ctrl_blk *ctrl_blk, size_t mem_uplimit,
 	ret = lc_cfg_items_init(ctrl_blk);
 	if (ret < 0) {
 		free(ctrl_blk->buff_pool);
-		lc_err("lc_cfg_items_init failed, ret:%d\n", ret);
+		lc_err("Error: lc_cfg_items_init failed, ret:%d\n", ret);
 		return ret;
 	}
 
@@ -591,7 +591,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 
 	/* check parameters */
 	if (ctrl_blk == NULL) {
-		lc_err("ctrl_blk is NULL\n");
+		lc_err("Error: ctrl_blk is NULL\n");
 		return LC_PARSE_RES_ERR_CTRL_BLK_INVALID;
 	}
 
@@ -646,7 +646,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			ret = lc_find_cfg_item_and_get_en(ctrl_blk, cfg_list,
 			                 ctrl_blk->ref_name_buff, &cb.ref_en);
 			if (ret < 0) {
-				lc_err("ref macro[%s] not found in %s line %llu, col %llu\n",
+				lc_err("Error: ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
 				          line_num, ctrl_blk->colu_num);
 				return ret;
@@ -676,7 +676,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			                ctrl_blk->inc_path_buff + cb.path_idx,
 			                ctrl_blk->ref_name_buff);
 			if (ret < 0) {
-				lc_err("ref macro[%s] not found in %s line %llu, col %llu\n",
+				lc_err("Error: ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
 				          line_num, ctrl_blk->colu_num);
 				return ret;
@@ -709,7 +709,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			                              ctrl_blk->item_value_buff + cb.value_idx,
 			                              ctrl_blk->ref_name_buff);
 			if (ret < 0) {
-				lc_err("ref macro[%s] not found in %s line %llu, col %llu\n",
+				lc_err("Error: ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
 				          line_num, ctrl_blk->colu_num);
 				return ret;
@@ -725,7 +725,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			ret = lc_find_cfg_item_and_cpy_val(ctrl_blk, &ctrl_blk->default_cfg_head,
 			                    ctrl_blk->item_value_buff, ctrl_blk->item_name_buff);
 			if (ret < 0) {
-				lc_err("ref macro[%s] not found in %s line %llu, col %llu\n",
+				lc_err("Error: ref macro[%s] not found in %s line %llu, col %llu\n",
 				        ctrl_blk->item_name_buff, ctrl_blk->default_cfg_head.name,
 				        line_num, ctrl_blk->colu_num);
 				return ret;
@@ -830,7 +830,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			ret = lc_find_cfg_item_and_get_en(ctrl_blk, &ctrl_blk->menu_cfg_head,
 			                                ctrl_blk->ref_name_buff, &cb.ref_en);
 			if (ret < 0) {
-				lc_err("ref macro[%s] not found in %s line %llu, col %llu\n",
+				lc_err("Error: ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
 				          line_num, ctrl_blk->colu_num);
 				return ret;
@@ -857,7 +857,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			             ctrl_blk->item_value_buff + cb.value_idx,
 			             ctrl_blk->ref_name_buff);
 			if (ret < 0) {
-				lc_err("ref macro[%s] not found in %s line %llu, col %llu\n",
+				lc_err("Error: ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
 				          line_num, ctrl_blk->colu_num);
 				return ret;
@@ -913,7 +913,7 @@ static int lc_parse_check_params(struct lc_ctrl_blk *ctrl_blk, char *cfg_file)
 		return LC_PARSE_RES_ERR_MEMORY_FAULT;
 
 	if (strlen(cfg_file) >= ctrl_blk->line_buff_size) {
-		lc_err("file name is too long[%lld], please check it\n", strlen(cfg_file));
+		lc_err("Error: file name is too long[%lld], please check it\n", strlen(cfg_file));
 		return LC_PARSE_RES_ERR_LINE_BUFF_OVERFLOW;
 	}
 
@@ -962,7 +962,7 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 
 	ret = lc_parse_check_params(ctrl_blk, file_name);
 	if (ret < 0) {
-		lc_err("lc_parse_check_params failed, ret:%d\n", ret);
+		lc_err("Error: lc_parse_check_params failed, ret:%d\n", ret);
 		return ret;
 	}
 
@@ -971,14 +971,14 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 
 	fp = fopen(file_name, "r");
 	if (fp == NULL) {
-		lc_err("Fail to open file %s, in %s line %llu\n",
+		lc_err("Error: fail to open file %s, in %s line %llu\n",
 		        file_name, prev_file_name, file_item->line_num);
 		return LC_PARSE_RES_ERR_FILE_NOT_FOUND;
 	}
 
 	ret = fsetpos(fp, &file_item->position);
 	if (ret < 0) {
-		lc_err("fgetpos fail, ret:%d\n", ret);
+		lc_err("Error: fgetpos fail, ret:%d\n", ret);
 		goto out;
 	}
 
@@ -988,7 +988,7 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 		line_num++;
 		len = strlen(ctrl_blk->line_buff);
 		if (len >= ctrl_blk->line_buff_size) {
-			lc_err("line %llu is too long, please check it\n", line_num);
+			lc_err("Error: line %llu is too long, please check it\n", line_num);
 			goto out;
 		}
 
@@ -1007,14 +1007,14 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 		lc_info("parsing: %s\n", ctrl_blk->line_buff);
 		ret = light_config_parse_cfg_line(ctrl_blk, line_num, is_default_cfg);
 		if (ret < 0) {
-			lc_err("Fail to parse %s line %llu, col %llu, ret:%d\n",
+			lc_err("Error: fail to parse %s line %llu, col %llu, ret:%d\n",
 			        file_name, line_num, ctrl_blk->colu_num, ret);
 			goto out;
 		}
 
 		if (ret != LC_PARSE_RES_OK_DEPEND_CFG && ret != LC_PARSE_RES_OK_INCLUDE &&
 		    ret != LC_PARSE_RES_OK_NORMAL_CFG) {
-			lc_err("Fail to parse %s line %llu, col[%llu], ret:%d\n",
+			lc_err("Error: fail to parse %s line %llu, col[%llu], ret:%d\n",
 			        file_name, line_num, ctrl_blk->colu_num, ret);
 			goto out;
 		}
@@ -1024,7 +1024,7 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 			fgetpos(fp, &file_item->position);
 			ret = lc_cfg_file_push(ctrl_blk, file_item);
 			if (ret < 0) {
-				lc_err("lc_cfg_file_push failed, ret:%d\n", ret);
+				lc_err("Error: lc_cfg_file_push failed, ret:%d\n", ret);
 				goto out;
 			}
 
@@ -1033,7 +1033,7 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 			memset(&inc_file_item.position, 0, sizeof(fpos_t));
 			ret = lc_cfg_file_push(ctrl_blk, &inc_file_item);
 			if (ret < 0) {
-				lc_err("lc_cfg_file_push failed, ret:%d\n", ret);
+				lc_err("Error: lc_cfg_file_push failed, ret:%d\n", ret);
 				goto out;
 			}
 			goto out;
@@ -1072,7 +1072,7 @@ int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
 
 	ret = lc_cfg_file_push(ctrl_blk, &file_item);
 	if (ret < 0) {
-		lc_err("lc_cfg_file_push failed, ret:%d\n", ret);
+		lc_err("Error: lc_cfg_file_push failed, ret:%d\n", ret);
 		return ret;
 	}
 
@@ -1080,7 +1080,7 @@ int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
 	while (ctrl_blk->cfg_file_stk.sp > 0) {
 		ret = lc_cfg_file_pop(ctrl_blk, &file_item);
 		if (ret < 0) {
-			lc_err("lc_cfg_file_pop failed, ret:%d\n", ret);
+			lc_err("Error: lc_cfg_file_pop failed, ret:%d\n", ret);
 			return ret;
 		}
 
@@ -1089,7 +1089,7 @@ int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
 
 		ret = lc_parse_cfg_file_with_item(ctrl_blk, is_default_cfg, &file_item);
 		if (ret < 0) {
-			lc_err("Fail to parse %s, ret:%d\n", file_item.file_name, ret);
+			lc_err("Error: fail to parse %s, ret:%d\n", file_item.file_name, ret);
 			return ret;
 		}
 	}
