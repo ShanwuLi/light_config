@@ -59,7 +59,7 @@ default config用于选择或使能menu config中的宏，从而完成配置文�
 是否生成makefile文件或头文件中的宏。
 
 #### 当前支持的函数（可以在light_config_parse_func.c中扩展更多函数，预留近7000个状态用于函数扩展）
-1. [@<macro> ? ([arg1], [arg2])] 用于三目运算符，当\<macro\>为true时，则选择第一个，否则选择第二个
+1. [@\<macro\> ? ([arg1], [arg2])] 用于三目运算符，当\<macro\>为true时，则选择第一个，否则选择第二个
 2. [@menu([arg1], [arg2], ...)] 用于枚举default config中合法的宏值
 3. [@range([min], [max])] 用于限制default config中宏的取值范围
 
