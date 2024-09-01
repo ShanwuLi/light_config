@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "config.h"
 
 //#define LC_DEBUG
 #define LC_INC_FILES_NUM_MAX               (102400)

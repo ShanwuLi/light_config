@@ -74,12 +74,12 @@ static struct lc_args g_lc_args[] = {
 	{
 		.name = "--menu_cfg",
 		.value = "menu.lc",
-		.desc = "specify menu config file",
+		.desc = "specify menu config file, menu.lc is default",
 	},
 	{
 		.name = "--default_cfg",
 		.value = "default.lc",
-		.desc = "specify default config file",
+		.desc = "specify default config file, default.lc is default",
 	},
 	{
 		.name = "--out_merged_cfg",
