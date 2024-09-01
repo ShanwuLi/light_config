@@ -1066,7 +1066,8 @@ int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
 	/* push the first item */
 	file_item.file_name = ctrl_blk->file_name_buff;
 	file_item.line_num = 0;
-	file_item.position = 0;
+
+	memset(&file_item.position, 0, sizeof(fpos_t));
 	memcpy(ctrl_blk->file_name_buff, cfg_file, strlen(cfg_file) + 1);
 
 	ret = lc_cfg_file_push(ctrl_blk, &file_item);
@@ -1083,7 +1084,7 @@ int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
 			return ret;
 		}
 
-		if (file_item.position == 0)
+		if (file_item.line_num == 0)
 			printf("Parsing %s\n", file_item.file_name);
 
 		ret = lc_parse_cfg_file_with_item(ctrl_blk, is_default_cfg, &file_item);

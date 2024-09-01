@@ -218,6 +218,8 @@ int main(int argc, char *argv[])
 		goto out;
 	}
 
+	printf("Genarate done.\n");
+
 	/* get the time */
 	// time_t rawtime;
 	// struct tm * timeinfo;
@@ -234,7 +236,6 @@ int main(int argc, char *argv[])
 	// time(&rawtime);
 	// timeinfo = localtime(&rawtime);
 	// printf("end: %s", asctime(timeinfo));
-	printf("Genarate done.\n");
 
 out:
 	light_config_deinit(&lc_cb);
