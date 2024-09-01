@@ -12,13 +12,13 @@ BAUD = 9600
 # IO = [<"string A">, "string B", "string C"]
 IO          = -$(dwefj)A
 # UART = [y, <n>]
-UART        += n
+UART        = n
 
 GDJHECJ = 2100
 
 MY_PATH   = subdir
-DUIEUFIE    ?=   YUWYFIWFI
-UART        := n72384723952
+DUIEUFIE     =   YUWYFIWFI
+UART         = n72384723952
 yudywud      = y
 CFG_UART_INT = n
 CFG_UART_INT =    "r387r8347t"
@@ -28,7 +28,7 @@ CFG_UART_INT = dwklwekclew<UART>
 SUYUFEU      = 242%26743680350yiwi/stm32f103.c
 
 
-DUIEUI      += "7HJDHJHJ"
+DUIEUI      = "7HJDHJHJ"
 YDYRYE   = <LC_TOPDIR>/DLWLEW
 tstrtds  = n
 SUBDIR = <LC_TOPDIR>/subdir

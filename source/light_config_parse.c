@@ -623,14 +623,29 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			break;
 
 		case 3:
+			if (is_default_cfg) {
+				lc_err("Error: only allow use '=' in %s line %llu, col %llu\n",
+				        ctrl_blk->file_name_buff, line_num, ctrl_blk->colu_num);
+				return -cb.next_state - 1;
+			}
 			cb.assign_type = LC_ASSIGN_TYPE_IMMEDIATE;
 			break;
 
 		case 4:
+			if (is_default_cfg) {
+				lc_err("Error: only allow use '=' in %s line %llu, col %llu\n",
+				        ctrl_blk->file_name_buff, line_num, ctrl_blk->colu_num);
+				return -cb.next_state - 1;
+			}
 			cb.assign_type = LC_ASSIGN_TYPE_ADDITION;
 			break;
 
 		case 5:
+			if (is_default_cfg) {
+				lc_err("Error: only allow use '=' in %s line %llu, col %llu\n",
+				        ctrl_blk->file_name_buff, line_num, ctrl_blk->colu_num);
+				return -cb.next_state - 1;
+			}
 			cb.assign_type = LC_ASSIGN_TYPE_CONDITIONAL;
 			break;
 		
