@@ -84,7 +84,6 @@ CXXSRC                        += <OS_TOPDIR>/menu.cpp
 
 ```makefile
 # "default config"
-# "default config"
 CONFIG_UART                   = "INSTAED_LOGO"
 UART_EN                       = y
 CONFIG_BAUD_RATE              = 115200
