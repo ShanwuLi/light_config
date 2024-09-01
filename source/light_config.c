@@ -102,7 +102,7 @@ static struct lc_ctrl_blk lc_cb;
 
 static struct lc_output_file_info output_merged_menu_cfg_file = {
 	.name = ".lc",
-	.content_prefix = NULL,
+	.content_prefix = mit_license_for_mk_file,
 	.content_suffix = NULL,
 };
 
