@@ -44,7 +44,7 @@ menu config的语法主要包含3部分，分别为
 ###### 宏值
 宏值定义为字符串，且可以使用[]来选择是否引用default config中的宏值，没有使用[]定义的宏值将不会
 索引default config中的宏值，可以通过[*]来直接获取default config中的宏值，每个宏值后面可以跟
-一个逻辑运算表达式，用于进行依赖构建。
+一个逻辑运算表达式，并将其用于依赖构建。
 
 ##### default config语法
 default config用于选择或使能menu config中的宏，从而完成配置文件的依赖构建。
