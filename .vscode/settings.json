@@ -9,6 +9,9 @@
 		"type_traits": "c",
 		"light_config_parse_func.h": "c",
 		"string.h": "c",
-		"light_config_output.h": "c"
+		"light_config_output.h": "c",
+		"typeinfo": "c",
+		"logic_expr_parse.h": "c",
+		"stdio.h": "c"
 	}
 }

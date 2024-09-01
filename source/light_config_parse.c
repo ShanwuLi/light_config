@@ -199,7 +199,7 @@ void lc_dump_cfg(struct lc_cfg_list *cfg_head)
  *
  * @return: cfg_item.
  ************************************************************************************/
-void light_config_free(struct lc_ctrl_blk *ctrl_blk)
+void light_config_deinit(struct lc_ctrl_blk *ctrl_blk)
 {
 	struct lc_mem_blk *pos;
 	struct lc_mem_blk *tmp;
@@ -248,7 +248,7 @@ static void lc_cfg_list_update_cache(struct lc_cfg_list *cfg_head, struct lc_cfg
  *
  * @return: cfg_item.
  ************************************************************************************/
-static struct lc_cfg_item *lc_find_cfg_item(struct lc_cfg_list *cfg_head, char *name)
+struct lc_cfg_item *lc_find_cfg_item(struct lc_cfg_list *cfg_head, char *name)
 {
 	int i;
 	struct lc_cfg_item *pos = NULL;
@@ -433,13 +433,20 @@ static int lc_add_cfg_item(struct lc_ctrl_blk *ctrl_blk, struct lc_list_node *cf
  ************************************************************************************/
 static int lc_cfg_items_init(struct lc_ctrl_blk *ctrl_blk)
 {
+	int i;
 	int ret;
 	char *ptr = NULL;
 
 	/* get top directory */
 	ptr = getcwd(ctrl_blk->temp_buff, ctrl_blk->line_buff_size);
 	if (ptr == NULL)
-		return LC_PASER_RES_ERR_FILE_NOT_FOUND;
+		return LC_PARSE_RES_ERR_FILE_NOT_FOUND;
+	
+	/* translate path to linux format */
+	for (i = 0; i < strlen(ctrl_blk->temp_buff); i++) {
+		if (ctrl_blk->temp_buff[i] == '\\')
+			ctrl_blk->temp_buff[i] = '/';
+	}
 
 	/* add top directory cfg item (LC_TOPDIR = "./xxx") to default cfg list */
 	ret = lc_add_cfg_item(ctrl_blk, &ctrl_blk->default_cfg_head.node,
@@ -498,7 +505,6 @@ int light_config_init(struct lc_ctrl_blk *ctrl_blk, size_t mem_uplimit,
 	}
 
 	mem_size = line_buff_size * 8 + cfg_file_num_max * sizeof(struct lc_cfg_file_item);
-	printf("mem_size[%llu]\n", mem_size);
 	ctrl_blk->buff_pool = malloc(mem_size);
 	if (ctrl_blk->buff_pool == NULL) {
 		lc_err("malloc buff_pool[%llu bytes] failed\n", mem_size);
@@ -555,9 +561,8 @@ static int lc_find_cfg_item_and_cpy_val(struct lc_ctrl_blk *ctrl_blk,
  * 
  * @return 0 on success, negative value if failure.
  ************************************************************************************/
-static int lc_find_cfg_item_and_get_en(struct lc_ctrl_blk *ctrl_blk,
-                                       struct lc_cfg_list *cfg_head,
-                                       char *item_name, bool *en)
+int lc_find_cfg_item_and_get_en(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_list *cfg_head,
+                                char *item_name, bool *en)
 {
 	struct lc_cfg_item *ref_item = lc_find_cfg_item(cfg_head, item_name);
 	if (ref_item == NULL)
@@ -596,6 +601,7 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 	memset(&cb, 0, sizeof(struct lc_parse_ctrl_blk));
 	cb.item_en = true;
 	cb.assign_type = LC_ASSIGN_TYPE_DIRECT;
+	cb.line_num = line_num;
 	ch = ctrl_blk->line_buff[cb.char_idx++];
 	ctrl_blk->colu_num = 0;
 
@@ -737,77 +743,63 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 		
 		case 152:
 			ctrl_blk->ref_name_buff[cb.ref_name_idx] = '\0';
-			ret = lc_find_cfg_item_and_get_en(ctrl_blk, &ctrl_blk->menu_cfg_head,
-			                                ctrl_blk->ref_name_buff, &cb.ref_en);
-			if (ret < 0) {
-				lc_err("ref macro[%s] not found in %s line %llu, col %llu\n",
-				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
-				          line_num, ctrl_blk->colu_num);
-				return ret;
-			}
 			break;
 		
 		case 154:
-			cb.select = (cb.ref_en ? 0 : 1);
-			cb.parsing_elem = lc_parsing_elem_func_select;
-			cb.parse_array_terminal = lc_parse_array_terminal_func_select;
-			break;
-		
-		case 200:
-			cb.select = -1;
+			ret = lc_parse_func_select_init(ctrl_blk, &cb, ch);
+			if (ret < 0)
+				return -cb.next_state - 1;;
 			break;
 		
 		case 204:
-			cb.default_item = lc_find_cfg_item(&ctrl_blk->default_cfg_head,
-			                                     ctrl_blk->item_name_buff);
-			if (cb.default_item == NULL) {
-				lc_err("item[%s] not defined in default config when parsing %s line %llu, col %llu\n",
-				        ctrl_blk->item_name_buff, ctrl_blk->file_name_buff,
-				        line_num, ctrl_blk->colu_num);
-				return LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND;
-			}
-			cb.parse_elem_start = lc_parse_elem_start_func_menu;
-			cb.parsing_elem = lc_parsing_elem_func_menu;
-			cb.parse_array_terminal = lc_parse_array_terminal_func_menu;
+			ret = lc_parse_func_menu_init(ctrl_blk, &cb, ch);
+			if (ret < 0)
+				return -cb.next_state - 1;
+			break;
+		
+		case 224:
+			ret = lc_parse_func_range_init(ctrl_blk, &cb, ch);
+			if (ret < 0)
+				return -cb.next_state - 1;
 			break;
 		
 		case 7000:
 			cb.temp_idx = 0;
-			cb.arr_elem_num = 0;
 			break;
 		
 		case 7002:
-			cb.arr_elem_idx = 0;
-			if (cb.parse_elem_start == NULL)
-				break;
-			ret = cb.parse_elem_start(ctrl_blk, &cb, ch);
-			if (ret < 0)
-				return -cb.next_state - 1;
+			cb.arr_elem_ch_idx = 0;
+			if (cb.parse_elem_start != NULL) {
+				ret = cb.parse_elem_start(ctrl_blk, &cb, ch);
+				if (ret < 0)
+					return -cb.next_state - 1;
+			}
 			break;
 
 		case 7003:
-			if (cb.parsing_elem == NULL)
-				break;
-			ret = cb.parsing_elem(ctrl_blk, &cb, ch);
-			if (ret < 0)
-				return -cb.next_state - 1;
+			if (cb.parsing_elem != NULL) {
+				ret = cb.parsing_elem(ctrl_blk, &cb, ch);
+				if (ret < 0)
+					return -cb.next_state - 1;
+			}
+			cb.arr_elem_ch_idx++;
 			break;
 		
 		case 7004:
-			cb.arr_elem_num++;
-			if (cb.parse_elem_end == NULL)
-				break;
-			ret = cb.parse_elem_end(ctrl_blk, &cb, ch);
-			if (ret < 0)
-				return -cb.next_state - 1;
+			if (cb.parse_elem_end != NULL) {
+				ret = cb.parse_elem_end(ctrl_blk, &cb, ch);
+				if (ret < 0)
+					return -cb.next_state - 1;
+			}
+			cb.arr_elem_idx++;
 			break;
 
 		case 7006:
-			if (cb.parse_array_terminal == NULL)
-				break;
-			ret = cb.parse_array_terminal(ctrl_blk, &cb, ch);
-			if (ret < 0)
-				return ret;
+			if (cb.parse_array_terminal != NULL) {
+				ret = cb.parse_array_terminal(ctrl_blk, &cb, ch);
+				if (ret < 0)
+					return ret;
+			}
 			break;
 
 		case 7050:
@@ -981,7 +973,7 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 	if (fp == NULL) {
 		lc_err("Fail to open file %s, in %s line %llu\n",
 		        file_name, prev_file_name, file_item->line_num);
-		return LC_PASER_RES_ERR_FILE_NOT_FOUND;
+		return LC_PARSE_RES_ERR_FILE_NOT_FOUND;
 	}
 
 	ret = fsetpos(fp, &file_item->position);
@@ -1092,7 +1084,7 @@ int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
 		}
 
 		if (file_item.position == 0)
-			printf("parsing %s\n", file_item.file_name);
+			printf("Parsing %s\n", file_item.file_name);
 
 		ret = lc_parse_cfg_file_with_item(ctrl_blk, is_default_cfg, &file_item);
 		if (ret < 0) {

@@ -1,8 +1,34 @@
-#include "light_config_output.h"
 #include <string.h>
+#include <stdlib.h>
+#include "light_config_output.h"
 
 #define LC_HEADER_DEFINE_NAME       "#define "
 #define LC_HEADER_DEFINE_NAME_LEN   (strlen("#define "))
+
+/*************************************************************************************
+ * @brief: convert config src name to capital
+ * 
+ * @param dst: destination buffer.
+ * @param src: source buffer.
+ * 
+ * @return: void.
+ ************************************************************************************/
+static void lc_convert_capital(char *dst, char *src)
+{
+	int char_idx;
+
+	for (char_idx = 0; char_idx < strlen(src); char_idx++) {
+		if (src[char_idx] == '.')
+			break;
+
+		if (src[char_idx] >= 'a' && src[char_idx] <= 'z')
+			dst[char_idx] = src[char_idx] - 32;
+		else
+			dst[char_idx] = src[char_idx];
+	}
+
+	dst[char_idx] = '\0';
+}
 
 /*************************************************************************************
  * @brief: output merged config to file
@@ -27,11 +53,11 @@ static int lc_output_cfg_to_merged_file(struct lc_cfg_list *cfg_list, char *line
 
 	merged_cfg_fp = fopen(merged_menu_cfg_file.name, "w");
 	if (merged_cfg_fp == NULL) {
-		printf("Fail to open file, %s\n", merged_menu_cfg_file.name);
-		return LC_PASER_RES_ERR_FILE_NOT_FOUND;
+		lc_err("fail to open file, %s\n", merged_menu_cfg_file.name);
+		return LC_PARSE_RES_ERR_FILE_NOT_FOUND;
 	}
 
-	printf("Writing %s\n", merged_menu_cfg_file.name);
+	printf("Genarating %s\n", merged_menu_cfg_file.name);
 	/* write the prefix of file content to file */
 	if (merged_menu_cfg_file.content_prefix != NULL) {
 		content = merged_menu_cfg_file.content_prefix;
@@ -134,11 +160,11 @@ static int lc_output_cfg_to_mk_file(struct lc_cfg_list *cfg_list, char *line_buf
 
 	mk_fp = fopen(mk_file.name, "w");
 	if (mk_fp == NULL) {
-		printf("Fail to open file, %s\n", mk_file.name);
-		return LC_PASER_RES_ERR_FILE_NOT_FOUND;
+		lc_err("fail to open file, %s\n", mk_file.name);
+		return LC_PARSE_RES_ERR_FILE_NOT_FOUND;
 	}
 
-	printf("Writing %s\n", mk_file.name);
+	printf("Genarating %s\n", mk_file.name);
 	/* write the prefix of file content to file */
 	if (mk_file.content_prefix != NULL) {
 		content = mk_file.content_prefix;
@@ -213,25 +239,34 @@ static int lc_output_cfg_to_header_file(struct lc_cfg_list *cfg_list, char *line
 	int char_idx;
 	char *content;
 	FILE *header_fp;
+	char *define_name;
 	size_t line_num = 0;
 	struct lc_cfg_item *pos;
 
 	if (lc_list_is_empty(&cfg_list->node))
 		return 0;
 
+	define_name = malloc(strlen(header_file.name) + 1);
+	if (define_name == NULL) {
+		lc_err("fail to malloc memory\n");
+		return LC_PARSE_RES_ERR_MEMORY_FAULT;
+	}
+	lc_convert_capital(define_name, header_file.name);
+
 	header_fp = fopen(header_file.name, "w");
 	if (header_fp == NULL) {
-		printf("Fail to open file, %s\n", header_file.name);
-		return LC_PASER_RES_ERR_FILE_NOT_FOUND;
+		lc_err("fail to open file, %s\n", header_file.name);
+		return LC_PARSE_RES_ERR_FILE_NOT_FOUND;
 	}
 
-	printf("Writing %s\n", header_file.name);
-
+	printf("Genarating %s\n", header_file.name);
 	/* write the prefix of file content to file */
 	if (header_file.content_prefix != NULL) {
 		content = header_file.content_prefix;
 		fwrite(content, strlen(content), 1, header_fp);
 	}
+
+	fprintf(header_fp, "#ifndef __%s_H__\n#define __%s_H__\n\n", define_name, define_name);
 
 	/* output each cfg item to file */
 	lc_list_for_each_entry(pos, &cfg_list->node, struct lc_cfg_item, node) {
@@ -270,6 +305,8 @@ static int lc_output_cfg_to_header_file(struct lc_cfg_list *cfg_list, char *line
 		line_num++;
 	}
 
+	fprintf(header_fp, "\n#endif /* __%s_H__*/\n", define_name);
+
 	/* write the suffix of file content to file */
 	if (header_file.content_suffix != NULL) {
 		content = header_file.content_suffix;
@@ -301,7 +338,7 @@ int light_config_output_cfg_to_file(struct lc_ctrl_blk *ctrl_blk,
 	ret = lc_output_cfg_to_merged_file(&ctrl_blk->menu_cfg_head,
 	                 ctrl_blk->temp_buff, merged_menu_cfg_file);
 	if (ret < 0) {
-		printf("Out menu cfg to %s file failed, ret:%d\n",
+		lc_err("out menu cfg to %s file failed, ret:%d\n",
 		        merged_menu_cfg_file.name, ret);
 		return ret;
 	}
@@ -310,7 +347,7 @@ int light_config_output_cfg_to_file(struct lc_ctrl_blk *ctrl_blk,
 	ret = lc_output_cfg_to_mk_file(&ctrl_blk->menu_cfg_head,
 	                     ctrl_blk->temp_buff, mk_file);
 	if (ret < 0) {
-		printf("Out menu cfg to %s file failed, ret:%d\n",
+		lc_err("out menu cfg to %s file failed, ret:%d\n",
 		        mk_file.name, ret);
 		return ret;
 	}
@@ -319,7 +356,7 @@ int light_config_output_cfg_to_file(struct lc_ctrl_blk *ctrl_blk,
 	ret = lc_output_cfg_to_header_file(&ctrl_blk->menu_cfg_head,
 	                          ctrl_blk->temp_buff, header_file);
 	if (ret < 0) {
-		printf("Out menu cfg to %s file failed, ret:%d\n",
+		lc_err("out menu cfg to %s file failed, ret:%d\n",
 		        header_file.name, ret);
 		return ret;
 	}

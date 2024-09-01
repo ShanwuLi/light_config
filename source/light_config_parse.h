@@ -70,7 +70,7 @@ enum lc_parse_res {
 	LC_PARSE_RES_ERR_MENU_CFG_INVALID,
 	LC_PARSE_RES_ERR_DIRECT_CFG_INVALID,
 	LC_PARSE_RES_ERR_NORMAL_CFG_INVALID,
-	LC_PASER_RES_ERR_FILE_NOT_FOUND,
+	LC_PARSE_RES_ERR_FILE_NOT_FOUND,
 	/* ok code */
 	LC_PARSE_RES_OK_DEPEND_CFG = 0,
 	LC_PARSE_RES_OK_NORMAL_CFG,
@@ -124,7 +124,7 @@ struct lc_cfg_file_item {
 };
 
 struct lc_cfg_file_stk {
-	ssize_t depth;
+	size_t depth;
 	ssize_t sp;
 	struct lc_cfg_file_item *item_stk;
 };
@@ -185,19 +185,22 @@ struct lc_parse_ctrl_blk {
 	bool ref_en;
 	int8_t match_state;
 	int8_t select;
+	uint8_t assign_type;
+	uint8_t value_type;
+	long long curr_val;
+	long long default_val;
 	int char_idx;
 	int name_idx;
 	int value_idx;
 	int expr_idx;
 	int path_idx;
 	int temp_idx;
-	int arr_elem_num;
 	int arr_elem_idx;
+	int arr_elem_ch_idx;
 	int ref_name_idx;
 	int curr_state;
 	int next_state;
-	uint8_t assign_type;
-	uint8_t value_type;
+	size_t line_num;
 	parse_func_t parse_elem_start;
 	parse_func_t parsing_elem;
 	parse_func_t parse_elem_end;
@@ -218,6 +221,29 @@ void lc_list_init(struct lc_list_node *node);
  * @return none.
  ************************************************************************************/
 bool lc_list_is_empty(struct lc_list_node *head);
+
+/*************************************************************************************
+ * @brief: find the cfg item, if found, copy the value to dst.
+ * 
+ * @param ctrl_blk: control block.
+ * @param cfg_head: cfg list head.
+ * @param item_name: item name.
+ * @param en: enable flag we got.
+ * 
+ * @return 0 on success, negative value if failure.
+ ************************************************************************************/
+int lc_find_cfg_item_and_get_en(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_list *cfg_head,
+                                char *item_name, bool *en);
+
+/*************************************************************************************
+ * @brief: find a cfg item.
+ *
+ * @param cfg_head: head of the list of the item.
+ * @param name: name.
+ *
+ * @return: cfg_item.
+ ************************************************************************************/
+struct lc_cfg_item *lc_find_cfg_item(struct lc_cfg_list *cfg_head, char *name);
 
 /*************************************************************************************
  * @brief: init .
@@ -261,6 +287,6 @@ void lc_dump_cfg(struct lc_cfg_list *cfg_head);
  *
  * @return: cfg_item.
  ************************************************************************************/
-void light_config_free(struct lc_ctrl_blk *ctrl_blk);
+void light_config_deinit(struct lc_ctrl_blk *ctrl_blk);
 
 #endif /* __LIGHT_CONFIG_H__ */

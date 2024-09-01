@@ -399,9 +399,9 @@ int lc_parse_state_get_next(int current_state, char ch)
 			return 222;
 		break;
 	
-	case 122:
+	case 222:
 		if (ch == 'g')
-			return 123;
+			return 223;
 		break;
 	
 	case 223:

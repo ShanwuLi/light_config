@@ -20,8 +20,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#ifndef __CONFIG_H__
-#define __CONFIG_H__
+
+#ifndef __CONFIG24_235_H__
+#define __CONFIG24_235_H__
 
 #define LC_TOPDIR F:/light_config/source/test
 #define dehfh
@@ -31,4 +32,4 @@ SOFTWARE.
 #define OS_TOPDIR .
 #define CXXSRC ./dhwehe.c
 
-#endif /* __CONFIG_H__*/
+#endif /* __CONFIG24_235_H__*/
