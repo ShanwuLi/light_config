@@ -387,6 +387,11 @@ static int lc_add_cfg_item(struct lc_ctrl_blk *ctrl_blk, struct lc_list_node *cf
 	uint32_t mem_size;
 	struct lc_cfg_item *cfg_item;
 
+	if (name_len >= ctrl_blk->line_buff_size || value_len >= ctrl_blk->line_buff_size) {
+		lc_err("Error: name_len[%d] or value_len[%d] over buffer\n", name_len, value_len);
+		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
+	}
+
 	if (name_len == 0) {
 		lc_err("Error: name is null\n");
 		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
