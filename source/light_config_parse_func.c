@@ -19,7 +19,7 @@ int lc_parse_func_select_init(struct lc_ctrl_blk *ctrl_blk,
 	ret = lc_find_cfg_item_and_get_en(ctrl_blk, &ctrl_blk->menu_cfg_head,
 	                                  ctrl_blk->ref_name_buff, &pcb->ref_en);
 	if (ret < 0) {
-		lc_err("ref macro[%s] not found in %s line %llu, col %llu\n",
+		lc_err("Error: ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
 				          pcb->line_num, ctrl_blk->colu_num);
 		return ret;
@@ -61,7 +61,7 @@ int lc_parse_array_terminal_func_select(struct lc_ctrl_blk *ctrl_blk,
                               struct lc_parse_ctrl_blk *pcb, char ch)
 {
 	if (pcb->arr_elem_idx > 2) {
-		lc_err("element num[%d] must be 2 with the [@<MACRO>] ? ([x], [y])\n",
+		lc_err("Error: element num[%d] must be 2 with the [@<MACRO>] ? ([x], [y])\n",
 		        pcb->arr_elem_idx);
 		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 	}
@@ -86,7 +86,7 @@ int lc_parse_func_menu_init(struct lc_ctrl_blk *ctrl_blk, struct lc_parse_ctrl_b
 	pcb->default_item = lc_find_cfg_item(&ctrl_blk->default_cfg_head,
 	                                      ctrl_blk->item_name_buff);
 	if (pcb->default_item == NULL) {
-		lc_err("item[%s] not defined in default config when parsing %s line %llu, col %llu\n",
+		lc_err("Error: item[%s] not defined in default config when parsing %s line %llu, col %llu\n",
 		        ctrl_blk->item_name_buff, ctrl_blk->file_name_buff, pcb->line_num, ctrl_blk->colu_num);
 		return LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND;
 	}
@@ -152,7 +152,7 @@ int lc_parse_array_terminal_func_menu(struct lc_ctrl_blk *ctrl_blk,
                             struct lc_parse_ctrl_blk *pcb, char ch)
 {
 	if (pcb->match_state != 1) {
-		lc_err("menu element[%s] not found in %s\n", pcb->default_item->value,
+		lc_err("Error: menu element[%s] not found in %s\n", pcb->default_item->value,
 		        ctrl_blk->item_name_buff);
 		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 	}
@@ -180,7 +180,7 @@ int lc_parse_func_range_init(struct lc_ctrl_blk *ctrl_blk, struct lc_parse_ctrl_
 	pcb->default_item = lc_find_cfg_item(&ctrl_blk->default_cfg_head,
 	                                      ctrl_blk->item_name_buff);
 	if (pcb->default_item == NULL) {
-		lc_err("item[%s] not defined in default config when parsing %s line %llu, col %llu\n",
+		lc_err("Error: item[%s] not defined in default config when parsing %s line %llu, col %llu\n",
 		        ctrl_blk->item_name_buff, ctrl_blk->file_name_buff,
 		        pcb->line_num, ctrl_blk->colu_num);
 		return LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND;
@@ -194,7 +194,7 @@ int lc_parse_func_range_init(struct lc_ctrl_blk *ctrl_blk, struct lc_parse_ctrl_
 
 	pcb->default_val = strtoll(pcb->default_item->value, &endptr, base);
 	if (*endptr != '\0') {
-		lc_err("invalid default value[%s] for item[%s] when parsing %s line %llu, col %llu\n",
+		lc_err("Error: invalid default value[%s] for item[%s] when parsing %s line %llu, col %llu\n",
 		        pcb->default_item->value, pcb->default_item->name, ctrl_blk->file_name_buff,
 		        pcb->line_num, ctrl_blk->colu_num);
 		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
@@ -278,7 +278,7 @@ int lc_parse_elem_end_func_range(struct lc_ctrl_blk *ctrl_blk,
 {
 	if (pcb->arr_elem_idx == 0) {
 		if (pcb->default_val < pcb->curr_val) {
-			lc_err("%s out of range of item[%s] when parsing %s line %llu, col %llu\n",
+			lc_err("Error: %s out of range of item[%s] when parsing %s line %llu, col %llu\n",
 			       pcb->default_item->value, pcb->default_item->name, ctrl_blk->file_name_buff,
 			       pcb->line_num, ctrl_blk->colu_num);
 			return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
@@ -287,7 +287,7 @@ int lc_parse_elem_end_func_range(struct lc_ctrl_blk *ctrl_blk,
 
 	if (pcb->arr_elem_idx == 1) {
 		if (pcb->default_val > pcb->curr_val) {
-			lc_err("%s out of range of item[%s] when parsing %s line %llu, col %llu\n",
+			lc_err("Error: %s out of range of item[%s] when parsing %s line %llu, col %llu\n",
 			       pcb->default_item->value, pcb->default_item->name, ctrl_blk->file_name_buff,
 			       pcb->line_num, ctrl_blk->colu_num);
 			return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;

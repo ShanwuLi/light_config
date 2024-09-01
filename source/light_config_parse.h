@@ -12,6 +12,9 @@
 #define LC_LINE_BUFF_SIZE_MAX              (8192)
 #define LC_MEM_UPLIMIT                     (128 * 1024 * 1024)
 
+typedef long long                          ll_t;
+typedef unsigned long long                 ull_t;
+
 #ifdef LC_DEBUG
 #define lc_info(fmt, ...)                  printf(fmt, ##__VA_ARGS__)
 #define lc_warn(fmt, ...)                  printf(fmt, ##__VA_ARGS__)
@@ -120,21 +123,21 @@ struct lc_cfg_list {
 struct lc_cfg_file_item {
 	char *file_name;
 	fpos_t position;
-	size_t line_num;
+	ull_t line_num;
 };
 
 struct lc_cfg_file_stk {
-	size_t depth;
-	ssize_t sp;
+	ull_t depth;
+	ll_t sp;
 	struct lc_cfg_file_item *item_stk;
 };
 
 struct lc_mem_blk_ctrl {
-	size_t uplimit;
-	size_t used;
-	size_t each_blk_size;
-	size_t curr_blk_size;
-	size_t curr_blk_rest;
+	ull_t uplimit;
+	ull_t used;
+	ull_t each_blk_size;
+	ull_t curr_blk_size;
+	ull_t curr_blk_rest;
 	void *ptr;
 	struct lc_list_node node;
 };
@@ -163,8 +166,8 @@ struct lc_mem_blk {
  * @cfg_file_name_stk: memory of the file name stack.
  ************************************************************************************/
 struct lc_ctrl_blk {
-	size_t line_buff_size;
-	size_t colu_num;
+	ull_t line_buff_size;
+	ull_t colu_num;
 	char *line_buff;
 	char *file_name_buff;
 	char *inc_path_buff;
@@ -200,7 +203,7 @@ struct lc_parse_ctrl_blk {
 	int ref_name_idx;
 	int curr_state;
 	int next_state;
-	size_t line_num;
+	ull_t line_num;
 	parse_func_t parse_elem_start;
 	parse_func_t parsing_elem;
 	parse_func_t parse_elem_end;
@@ -254,9 +257,9 @@ struct lc_cfg_item *lc_find_cfg_item(struct lc_cfg_list *cfg_head, char *name);
  *
  * @return: cfg_item.
  ************************************************************************************/
-int light_config_init(struct lc_ctrl_blk *ctrl_blk, size_t mem_uplimit,
-                      size_t line_buff_size, size_t cfg_file_num_max,
-                      size_t each_mem_blk_size);
+int light_config_init(struct lc_ctrl_blk *ctrl_blk, ull_t mem_uplimit,
+                      ull_t line_buff_size, ull_t cfg_file_num_max,
+                      ull_t each_mem_blk_size);
 
 /*************************************************************************************
  * @brief: parse the config file.

@@ -109,7 +109,7 @@ static int lc_cfg_file_push(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_file_ite
 	struct lc_cfg_file_stk *stk = &(ctrl_blk->cfg_file_stk);
 
 	if (stk->sp >= stk->depth) {
-		lc_err("Error: push fail, cfg file num[%lld] overflow[%lld]\n", stk->sp, stk->depth);
+		lc_err("Error: push fail, cfg file num[%lld] overflow[%llu]\n", stk->sp, stk->depth);
 		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
 	}
 	
@@ -295,9 +295,9 @@ struct lc_cfg_item *lc_find_cfg_item(struct lc_cfg_list *cfg_head, char *name)
  * 
  * @return: void.
  ************************************************************************************/
-static void lc_cb_init(struct lc_ctrl_blk *ctrl_blk, size_t line_buff_size,
-                       size_t mem_uplimit, size_t each_mem_blk_size,
-                       size_t cfg_file_num_max, void *cfg_file_stk)
+static void lc_cb_init(struct lc_ctrl_blk *ctrl_blk, ull_t line_buff_size,
+                       ull_t mem_uplimit, ull_t each_mem_blk_size,
+                       ull_t cfg_file_num_max, void *cfg_file_stk)
 {
 	ctrl_blk->line_buff_size = line_buff_size;
 	ctrl_blk->colu_num = 0;
@@ -398,7 +398,7 @@ static int lc_add_cfg_item(struct lc_ctrl_blk *ctrl_blk, struct lc_list_node *cf
 	}
 
 	mem_size = sizeof(struct lc_cfg_item) + name_len + value_len;
-	cfg_item = lc_malloc(ctrl_blk, mem_size + sizeof(size_t));
+	cfg_item = lc_malloc(ctrl_blk, mem_size + sizeof(ull_t));
 	if (cfg_item == NULL) {
 		lc_err("Error: no mem to allocate cfg item\n");
 		return LC_PARSE_RES_ERR_MEMORY_FAULT;
@@ -484,12 +484,12 @@ static int lc_cfg_items_init(struct lc_ctrl_blk *ctrl_blk)
  *
  * @return: cfg_item.
  ************************************************************************************/
-int light_config_init(struct lc_ctrl_blk *ctrl_blk, size_t mem_uplimit,
-                      size_t line_buff_size, size_t cfg_file_num_max,
-                      size_t each_mem_blk_size)
+int light_config_init(struct lc_ctrl_blk *ctrl_blk, ull_t mem_uplimit,
+                      ull_t line_buff_size, ull_t cfg_file_num_max,
+                      ull_t each_mem_blk_size)
 {
 	int ret;
-	size_t mem_size;
+	ull_t mem_size;
 
 	if (ctrl_blk == NULL) {
 		lc_err("Error: ctrl_blk is NULL\n");
@@ -582,7 +582,7 @@ int lc_find_cfg_item_and_get_en(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_list
  * @param zero on success, negative value on error.
  ************************************************************************************/
 int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
-                       size_t line_num, bool is_default_cfg)
+                         ull_t line_num, bool is_default_cfg)
 {
 	int ret;
 	char ch;
@@ -929,7 +929,7 @@ static int lc_parse_check_params(struct lc_ctrl_blk *ctrl_blk, char *cfg_file)
  * 
  * @return pointer of line.
  ************************************************************************************/
-static char *lc_get_line(struct lc_ctrl_blk *ctrl_blk, FILE *fp, size_t buff_offset)
+static char *lc_get_line(struct lc_ctrl_blk *ctrl_blk, FILE *fp, ull_t buff_offset)
 {
 	char *pch;
 
@@ -954,9 +954,9 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 	int ret;
 	char *pch;
 	FILE *fp;
-	size_t len = 0;
+	ull_t len = 0;
 	char *prev_file_name;
-	size_t line_num = file_item->line_num;
+	ull_t line_num = file_item->line_num;
 	char *file_name = file_item->file_name;
 	struct lc_cfg_file_item inc_file_item;
 

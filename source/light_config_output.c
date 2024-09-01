@@ -53,7 +53,7 @@ static int lc_output_cfg_to_merged_file(struct lc_cfg_list *cfg_list, char *line
 
 	merged_cfg_fp = fopen(merged_menu_cfg_file.name, "w");
 	if (merged_cfg_fp == NULL) {
-		lc_err("fail to open file, %s\n", merged_menu_cfg_file.name);
+		lc_err("Error: fail to open file, %s\n", merged_menu_cfg_file.name);
 		return LC_PARSE_RES_ERR_FILE_NOT_FOUND;
 	}
 
@@ -160,7 +160,7 @@ static int lc_output_cfg_to_mk_file(struct lc_cfg_list *cfg_list, char *line_buf
 
 	mk_fp = fopen(mk_file.name, "w");
 	if (mk_fp == NULL) {
-		lc_err("fail to open file, %s\n", mk_file.name);
+		lc_err("Error: fail to open file, %s\n", mk_file.name);
 		return LC_PARSE_RES_ERR_FILE_NOT_FOUND;
 	}
 
@@ -248,14 +248,14 @@ static int lc_output_cfg_to_header_file(struct lc_cfg_list *cfg_list, char *line
 
 	define_name = malloc(strlen(header_file.name) + 1);
 	if (define_name == NULL) {
-		lc_err("fail to malloc memory\n");
+		lc_err("Error: fail to malloc memory\n");
 		return LC_PARSE_RES_ERR_MEMORY_FAULT;
 	}
 	lc_convert_capital(define_name, header_file.name);
 
 	header_fp = fopen(header_file.name, "w");
 	if (header_fp == NULL) {
-		lc_err("fail to open file, %s\n", header_file.name);
+		lc_err("Error: fail to open file, %s\n", header_file.name);
 		return LC_PARSE_RES_ERR_FILE_NOT_FOUND;
 	}
 
@@ -338,7 +338,7 @@ int light_config_output_cfg_to_file(struct lc_ctrl_blk *ctrl_blk,
 	ret = lc_output_cfg_to_merged_file(&ctrl_blk->menu_cfg_head,
 	                 ctrl_blk->temp_buff, merged_menu_cfg_file);
 	if (ret < 0) {
-		lc_err("out menu cfg to %s file failed, ret:%d\n",
+		lc_err("Error: out menu cfg to %s file failed, ret:%d\n",
 		        merged_menu_cfg_file.name, ret);
 		return ret;
 	}
@@ -347,7 +347,7 @@ int light_config_output_cfg_to_file(struct lc_ctrl_blk *ctrl_blk,
 	ret = lc_output_cfg_to_mk_file(&ctrl_blk->menu_cfg_head,
 	                     ctrl_blk->temp_buff, mk_file);
 	if (ret < 0) {
-		lc_err("out menu cfg to %s file failed, ret:%d\n",
+		lc_err("Error: out menu cfg to %s file failed, ret:%d\n",
 		        mk_file.name, ret);
 		return ret;
 	}
@@ -356,7 +356,7 @@ int light_config_output_cfg_to_file(struct lc_ctrl_blk *ctrl_blk,
 	ret = lc_output_cfg_to_header_file(&ctrl_blk->menu_cfg_head,
 	                          ctrl_blk->temp_buff, header_file);
 	if (ret < 0) {
-		lc_err("out menu cfg to %s file failed, ret:%d\n",
+		lc_err("Error: out menu cfg to %s file failed, ret:%d\n",
 		        header_file.name, ret);
 		return ret;
 	}
