@@ -26,33 +26,33 @@ SOFTWARE.
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#define LC_TOPDIR F:/light_config/source/test
+#define LC_TOPDIR   F:/light_config/source/test
 #define dehfh
-#define TDWUEFYUEWYF wggww
-#define SOURCE CSRC/ZZ/YYwggww
-#define dhwejkc 0
-#define OS_TOPDIR .
-#define CXXSRC ./dhwehe.c
-#define XX n74827384732
-#define CFG yutieurtieur
-#define BAUD 9600
-#define IO -$(dwefj)A
-#define GDJHECJ 2100
-#define MY_PATH subdir
+#define TDWUEFYUEWYF   wggww
+#define SOURCE   CSRC/ZZ/YYwggww
+#define dhwejkc   0
+#define OS_TOPDIR   .
+#define CXXSRC   ./dhwehe.c
+#define XX   n74827384732
+#define CFG   yutieurtieur
+#define BAUD   9600
+#define IO   -$(dwefj)A
+#define GDJHECJ   2100
+#define MY_PATH   subdir
 #define yudywud
-#define CFG_UART_INT "r387r8347t"
-#define CFG_UART_INT 'r78374t8347t'
-#define CFG_UART_INT 672684738
-#define CFG_UART_INT dwklwekclewn72384723952
-#define SUYUFEU 242%26743680350yiwi/stm32f103.c
-#define YDYRYE F:/light_config/source/test/DLWLEW
-#define SUBDIR F:/light_config/source/test/subdir
-#define HJHFJHDJ F:/light_config/source/test/DLWLEW/74932859
-#define TYTYTY HEFHKEJF:/light_config/source/test/DLWLEWKWJEKJC dwklwekclewn72384723952 wegweg"jdoejf"
-#define fehfherjhj djwjkwejcwkelc kjck ej "dkjwekf"
-#define uudiweuci "hde""wjk  "hcicijwijviwejivjew
+#define CFG_UART_INT   "r387r8347t"
+#define CFG_UART_INT   'r78374t8347t'
+#define CFG_UART_INT   672684738
+#define CFG_UART_INT   dwklwekclewn72384723952
+#define SUYUFEU   242%26743680350yiwi/stm32f103.c
+#define YDYRYE   F:/light_config/source/test/DLWLEW
+#define SUBDIR   F:/light_config/source/test/subdir
+#define HJHFJHDJ   F:/light_config/source/test/DLWLEW/74932859
+#define TYTYTY   HEFHKEJF:/light_config/source/test/DLWLEWKWJEKJC dwklwekclewn72384723952 wegweg"jdoejf"
+#define fehfherjhj   djwjkwejcwkelc kjck ej "dkjwekf"
+#define uudiweuci   "hde""wjk  "hcicijwijviwejivjew
 #define dhwejkc
-#define uudiweuci "hde""wjk  "hcicijwijviwejivjew
-#define hwfwkejfk jk
+#define uudiweuci   "hde""wjk  "hcicijwijviwejivjew
+#define hwfwkejfk   jk
 
 #endif /* __CONFIG_H__*/

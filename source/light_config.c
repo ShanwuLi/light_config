@@ -175,7 +175,7 @@ static int lc_parse_argvs(int argc, char *argv[])
 	/* must specify menu_cfg and default_cfg */
 	if (g_lc_args[2].value == NULL || g_lc_args[3].value == NULL)
 		return -1;
-	
+
 	/* set output file name */
 	if (g_lc_args[4].value != NULL)
 		output_merged_menu_cfg_file.name = g_lc_args[4].value;

@@ -295,6 +295,9 @@ static int lc_output_cfg_to_header_file(struct lc_cfg_list *cfg_list, char *line
 		}
 
 		line_buffer[char_idx++] = ' ';
+		line_buffer[char_idx++] = ' ';
+		line_buffer[char_idx++] = ' ';
+
 		/* copy variable value to line buffer */
 		memcpy(line_buffer + char_idx, pos->value, pos->value_len);
 		char_idx += pos->value_len;
