@@ -13,21 +13,37 @@
  * 
  * @return: void.
  ************************************************************************************/
-static void lc_convert_capital(char *dst, char *src)
+static int lc_convert_capital(char *dst, char *src)
 {
+	int i = 0;
 	int char_idx;
 
-	for (char_idx = 0; char_idx < strlen(src); char_idx++) {
-		if (src[char_idx] == '.')
-			break;
-
-		if (src[char_idx] >= 'a' && src[char_idx] <= 'z')
-			dst[char_idx] = src[char_idx] - 32;
-		else
-			dst[char_idx] = src[char_idx];
+	if (strlen(src) == 0) {
+		lc_err("Error: src string is empty\n");
+		return LC_PARSE_RES_ERR_MEMORY_FAULT;
 	}
 
-	dst[char_idx] = '\0';
+	/* find the '/' idx of src string */
+	for (char_idx = strlen(src) - 1; char_idx >= 0; char_idx--) {
+		if (src[char_idx] == '/')
+			break;
+	}
+
+	/* convert src string to dst */
+	for (char_idx += 1; char_idx < strlen(src); char_idx++) {
+		if (src[char_idx] == '.') {
+			dst[i++] = '_';
+			continue;
+		}
+
+		if (src[char_idx] >= 'a' && src[char_idx] <= 'z')
+			dst[i++] = src[char_idx] - 32;
+		else
+			dst[i++] = src[char_idx];
+	}
+
+	dst[i] = '\0';
+	return 0;
 }
 
 /*************************************************************************************
@@ -236,6 +252,7 @@ static int lc_output_cfg_to_mk_file(struct lc_cfg_list *cfg_list, char *line_buf
 static int lc_output_cfg_to_header_file(struct lc_cfg_list *cfg_list, char *line_buffer,
                                                  struct lc_output_file_info header_file)
 {
+	int ret;
 	int char_idx;
 	char *content;
 	FILE *header_fp;
@@ -251,10 +268,16 @@ static int lc_output_cfg_to_header_file(struct lc_cfg_list *cfg_list, char *line
 		lc_err("Error: fail to malloc memory\n");
 		return LC_PARSE_RES_ERR_MEMORY_FAULT;
 	}
-	lc_convert_capital(define_name, header_file.name);
+
+	ret = lc_convert_capital(define_name, header_file.name);
+	if (ret < 0) {
+		free(define_name);
+		return ret;
+	}
 
 	header_fp = fopen(header_file.name, "w");
 	if (header_fp == NULL) {
+		free(define_name);
 		lc_err("Error: fail to open file, %s\n", header_file.name);
 		return LC_PARSE_RES_ERR_FILE_NOT_FOUND;
 	}
@@ -266,7 +289,7 @@ static int lc_output_cfg_to_header_file(struct lc_cfg_list *cfg_list, char *line
 		fwrite(content, strlen(content), 1, header_fp);
 	}
 
-	fprintf(header_fp, "#ifndef __%s_H__\n#define __%s_H__\n\n", define_name, define_name);
+	fprintf(header_fp, "#ifndef __%s__\n#define __%s__\n\n", define_name, define_name);
 
 	/* output each cfg item to file */
 	lc_list_for_each_entry(pos, &cfg_list->node, struct lc_cfg_item, node) {
@@ -308,7 +331,7 @@ static int lc_output_cfg_to_header_file(struct lc_cfg_list *cfg_list, char *line
 		line_num++;
 	}
 
-	fprintf(header_fp, "\n#endif /* __%s_H__*/\n", define_name);
+	fprintf(header_fp, "\n#endif /* __%s__*/\n", define_name);
 
 	/* write the suffix of file content to file */
 	if (header_file.content_suffix != NULL) {
@@ -317,6 +340,7 @@ static int lc_output_cfg_to_header_file(struct lc_cfg_list *cfg_list, char *line
 	}
 
 	fclose(header_fp);
+	free(define_name);
 	return 0;
 }
 

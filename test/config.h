@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#define LC_TOPDIR   F:/light_config/source/test
+#define LC_TOPDIR   F:/light_config/test
 #define dehfh
 #define TDWUEFYUEWYF   wggww
 #define SOURCE   CSRC/ZZ/YYwggww
@@ -45,10 +45,10 @@ SOFTWARE.
 #define CFG_UART_INT   672684738
 #define CFG_UART_INT   dwklwekclewn72384723952
 #define SUYUFEU   242%26743680350yiwi/stm32f103.c
-#define YDYRYE   F:/light_config/source/test/DLWLEW
-#define SUBDIR   F:/light_config/source/test/subdir
-#define HJHFJHDJ   F:/light_config/source/test/DLWLEW/74932859
-#define TYTYTY   HEFHKEJF:/light_config/source/test/DLWLEWKWJEKJC dwklwekclewn72384723952 wegweg"jdoejf"
+#define YDYRYE   F:/light_config/test/DLWLEW
+#define SUBDIR   F:/light_config/test/subdir
+#define HJHFJHDJ   F:/light_config/test/DLWLEW/74932859
+#define TYTYTY   HEFHKEJF:/light_config/test/DLWLEWKWJEKJC dwklwekclewn72384723952 wegweg"jdoejf"
 #define fehfherjhj   djwjkwejcwkelc kjck ej "dkjwekf"
 #define uudiweuci   "hde""wjk  "hcicijwijviwejivjew
 #define dhwejkc
