@@ -1,7 +1,7 @@
 # Makefile template for a simple C/C++ project
 
 # Define the compiler and its flags
-CC=gcc
+HOSTCC ?=
 CFLAGS=-Wall -g
 MKDIR := mkdir -p
 DIR_GUARD = @$(MKDIR) $(@D)
@@ -22,12 +22,12 @@ all: ../out/$(EXEC)
 
 # Rule to compile the executable
 ../out/$(EXEC): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(HOSTCC) $(CFLAGS) -o $@ $^
 
 # Rule to compile each .c file into an .o file
 ../out/%.o: %.c
 	$(DIR_GUARD)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(HOSTCC) $(CFLAGS) -c $< -o $@
 
 # Target to clean up the object files and the executable
 clean:
@@ -36,4 +36,4 @@ clean:
 # Include dependency rules if they exist
 # Automatic rule generation for dependencies
 out/%.d: %.c
-	$(CC) $(CFLAGS) -MM $< > $@
+	$(HOSTCC) $(CFLAGS) -MM $< > $@
