@@ -16,4 +16,4 @@ SUB_DIR                       = <OS_TOPDIR>/subdir
 
 CSRCS-<UART_EN>               += <OS_TOPDIR>/uart.c
 ASMCSRCS-<UART_EN>            += <OS_TOPDIR>/uart_asm.S
-CXXSRC                        += <OS_TOPDIR>/menu.cpp
+CXXSRC-<SUB_DIR>              += <OS_TOPDIR>/menu.cpp

@@ -13,25 +13,25 @@ SRCS= light_config.c light_config_parse.c logic_expr_parse.c \
 
 
 C_OBJS_TMP = $(patsubst %.c,%.o,$(SRCS))
-OBJS := $(addprefix out/,$(C_OBJS_TMP))
+OBJS := $(addprefix ../out/,$(C_OBJS_TMP))
 
 EXEC=light_config
 
 # Define the default target to build the executable
-all: test/$(EXEC)
+all: ../out/$(EXEC)
 
 # Rule to compile the executable
-test/$(EXEC): $(OBJS)
+../out/$(EXEC): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 # Rule to compile each .c file into an .o file
-out/%.o: %.c
+../out/%.o: %.c
 	$(DIR_GUARD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Target to clean up the object files and the executable
 clean:
-	rm -rf out test/main.exe
+	rm -rf ../out test/main.exe
 
 # Include dependency rules if they exist
 # Automatic rule generation for dependencies
