@@ -13,7 +13,7 @@ BAUD   ?= [@menu([9600], [11520], [115200], [dhweckwev])] & (<ZZ> & !<IO> | <UU>
 CSRC-n   =   [<BAUD>]
 TDWUEFYUEWYF = wggww
 
-GDJHECJ-n = [@range([0.8989797984900], [0.898979799])]
+GDJHECJ-n = [@range([0x4656], [0x689])]
 
 SOURCE-<dehfh> = CSRC/ZZ/YY<TDWUEFYUEWYF>
 gwgewhwh  = [*] & !<dehfh>

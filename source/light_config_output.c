@@ -73,7 +73,7 @@ static int lc_output_cfg_to_merged_file(struct lc_cfg_list *cfg_list, char *line
 		return LC_PARSE_RES_ERR_FILE_NOT_FOUND;
 	}
 
-	printf("Genarating %s\n", merged_menu_cfg_file.name);
+	printf("Configuration written to %s\n", merged_menu_cfg_file.name);
 	/* write the prefix of file content to file */
 	if (merged_menu_cfg_file.content_prefix != NULL) {
 		content = merged_menu_cfg_file.content_prefix;
@@ -180,7 +180,7 @@ static int lc_output_cfg_to_mk_file(struct lc_cfg_list *cfg_list, char *line_buf
 		return LC_PARSE_RES_ERR_FILE_NOT_FOUND;
 	}
 
-	printf("Genarating %s\n", mk_file.name);
+	printf("Configuration written to %s\n", mk_file.name);
 	/* write the prefix of file content to file */
 	if (mk_file.content_prefix != NULL) {
 		content = mk_file.content_prefix;
@@ -282,7 +282,7 @@ static int lc_output_cfg_to_header_file(struct lc_cfg_list *cfg_list, char *line
 		return LC_PARSE_RES_ERR_FILE_NOT_FOUND;
 	}
 
-	printf("Genarating %s\n", header_file.name);
+	printf("Configuration written to %s\n", header_file.name);
 	/* write the prefix of file content to file */
 	if (header_file.content_prefix != NULL) {
 		content = header_file.content_prefix;
@@ -361,6 +361,7 @@ int light_config_output_cfg_to_file(struct lc_ctrl_blk *ctrl_blk,
 {
 	int ret;
 
+	printf("Configuration writing starts...\n");
 	/* output the menu configuration item to file */
 	ret = lc_output_cfg_to_merged_file(&ctrl_blk->menu_cfg_head,
 	                 ctrl_blk->temp_buff, merged_menu_cfg_file);
@@ -388,5 +389,6 @@ int light_config_output_cfg_to_file(struct lc_ctrl_blk *ctrl_blk,
 		return ret;
 	}
 
+	printf("Configuration writing done\n");
 	return 0;
 }

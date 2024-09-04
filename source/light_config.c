@@ -172,10 +172,6 @@ static int lc_parse_argvs(int argc, char *argv[])
 			return -1;
 	}
 
-	/* must specify menu_cfg and default_cfg */
-	if (g_lc_args[2].value == NULL || g_lc_args[3].value == NULL)
-		return -1;
-
 	/* set output file name */
 	if (g_lc_args[4].value != NULL)
 		output_merged_menu_cfg_file.name = g_lc_args[4].value;
@@ -217,15 +213,12 @@ int main(int argc, char *argv[])
 		goto out;
 	}
 
-	printf("Parse done.\n");
 	ret = light_config_output_cfg_to_file(&lc_cb, output_merged_menu_cfg_file,
 	                                      output_mk_file, output_header_file);
 	if (ret < 0) {
 		lc_err("Fail to output cfg file, ret:%d\n", ret);
 		goto out;
 	}
-
-	printf("Genarate done.\n");
 
 	/* get the time */
 	// time_t rawtime;
