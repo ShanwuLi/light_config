@@ -190,8 +190,6 @@ struct lc_parse_ctrl_blk {
 	int8_t select;
 	uint8_t assign_type;
 	uint8_t value_type;
-	long long curr_val;
-	long long default_val;
 	int char_idx;
 	int name_idx;
 	int value_idx;

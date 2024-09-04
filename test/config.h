@@ -37,7 +37,7 @@ SOFTWARE.
 #define CFG   yutieurtieur
 #define BAUD   9600
 #define IO   -$(dwefj)A
-#define GDJHECJ   2100
+#define GDJHECJ   0x800
 #define MY_PATH   subdir
 #define yudywud
 #define CFG_UART_INT   "r387r8347t"
