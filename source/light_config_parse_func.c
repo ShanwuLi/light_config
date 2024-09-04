@@ -219,6 +219,9 @@ int lc_parse_elem_start_func_range(struct lc_ctrl_blk *ctrl_blk,
 int lc_parsing_elem_func_range(struct lc_ctrl_blk *ctrl_blk,
                      struct lc_parse_ctrl_blk *pcb, char ch)
 {
+	if (pcb->match_state != 0)
+		return 0;
+
 	switch (pcb->arr_elem_idx) {
 	case 0:
 		if (ch > pcb->default_item->value[pcb->arr_elem_ch_idx]) {
@@ -227,6 +230,12 @@ int lc_parsing_elem_func_range(struct lc_ctrl_blk *ctrl_blk,
 			       pcb->line_num, ctrl_blk->colu_num);
 			return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 		}
+
+		if (ch < pcb->default_item->value[pcb->arr_elem_ch_idx]) {
+			pcb->match_state = 1;
+			return 0;
+		}
+
 		break;
 
 	case 1:
@@ -236,6 +245,12 @@ int lc_parsing_elem_func_range(struct lc_ctrl_blk *ctrl_blk,
 			       pcb->line_num, ctrl_blk->colu_num);
 			return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 		}
+
+		if (ch > pcb->default_item->value[pcb->arr_elem_ch_idx]) {
+			pcb->match_state = 1;
+			return 0;
+		}
+
 		break;
 
 	default:
@@ -260,6 +275,11 @@ int lc_parsing_elem_func_range(struct lc_ctrl_blk *ctrl_blk,
 int lc_parse_elem_end_func_range(struct lc_ctrl_blk *ctrl_blk,
                        struct lc_parse_ctrl_blk *pcb, char ch)
 {
+	if (pcb->match_state != 0) {
+		pcb->match_state = 0;
+		return 0;
+	}
+
 	switch (pcb->arr_elem_idx) {
 	case 0:
 		if (pcb->arr_elem_ch_idx > pcb->default_item->value_len) {

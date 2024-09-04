@@ -14,7 +14,7 @@ IO          = -$(dwefj)A
 # UART = [y, <n>]
 UART        = n
 
-GDJHECJ = 0x123456
+GDJHECJ = 0.8989797985
 
 MY_PATH   = subdir
 DUIEUFIE     =   YUWYFIWFI
