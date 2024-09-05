@@ -271,13 +271,20 @@ int lc_parse_elem_end_func_range(struct lc_ctrl_blk *ctrl_blk,
 		break;
 
 	case 1:
-		if (pcb->select < pcb->location || pcb->match_state < 0 ||
-		    pcb->arr_elem_ch_idx < pcb->default_item->value_len) {
+		if (pcb->select < pcb->location || pcb->match_state < 0) {
 			lc_err("Error: %s out of range of item[%s] when parsing %s line %llu, col %llu\n",
 				pcb->default_item->value, pcb->default_item->name, ctrl_blk->file_name_buff,
 				pcb->line_num, ctrl_blk->colu_num);
 			return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 		}
+
+		if (pcb->select == pcb->location && pcb->match_state == 0 &&
+		    pcb->arr_elem_ch_idx < pcb->default_item->value_len) {
+				lc_err("Error: %s out of range of item[%s] when parsing %s line %llu, col %llu\n",
+				pcb->default_item->value, pcb->default_item->name, ctrl_blk->file_name_buff,
+				pcb->line_num, ctrl_blk->colu_num);
+				return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
+			}
 		break;
 
 	default:
