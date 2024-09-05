@@ -29,6 +29,7 @@ SOFTWARE.
 #define LC_TOPDIR   F:/light_config/test
 #define dehfh
 #define TDWUEFYUEWYF   wggww
+#define GDJHECJ   7878.787878
 #define SOURCE   CSRC/ZZ/YYwggww
 #define dhwejkc   0
 #define OS_TOPDIR   .

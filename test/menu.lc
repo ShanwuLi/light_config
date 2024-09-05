@@ -7,13 +7,14 @@ UU     := wgwg
 afasgasg     = n
 
 
+
 dhwjhjweh += [] & <UU>
 
 BAUD   ?= [@menu([9600], [11520], [115200], [dhweckwev])] & (<ZZ> & !<IO> | <UU>)
 CSRC-n   =   [<BAUD>]
 TDWUEFYUEWYF = wggww
 
-GDJHECJ-n = [@range([0x4656], [0x689])]
+GDJHECJ = [@range([7878.7], [0.78787])]
 
 SOURCE-<dehfh> = CSRC/ZZ/YY<TDWUEFYUEWYF>
 gwgewhwh  = [*] & !<dehfh>
@@ -27,5 +28,8 @@ OS_TOPDIR = .
 CXXSRC-<dhwejkc> = <OS_TOPDIR>/dhwehe.c
 CXXSRC-<UU> += <OS_TOPDIR>/test.c
 CXXSRC += <OS_TOPDIR>/dwefewvewve.c
+
+RHERHERHER   ?= [@menu([ ], [11520], [115200], [dhweckwev])]
+
 
 -include "test_default.cfg"

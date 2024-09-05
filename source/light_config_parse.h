@@ -186,8 +186,9 @@ struct lc_ctrl_blk {
 struct lc_parse_ctrl_blk {
 	bool item_en;
 	bool ref_en;
-	int8_t match_state;
-	int8_t select;
+	int match_state;
+	int select;
+	int location;
 	uint8_t assign_type;
 	uint8_t value_type;
 	int char_idx;
@@ -222,29 +223,6 @@ void lc_list_init(struct lc_list_node *node);
  * @return none.
  ************************************************************************************/
 bool lc_list_is_empty(struct lc_list_node *head);
-
-/*************************************************************************************
- * @brief: find the cfg item, if found, copy the value to dst.
- * 
- * @param ctrl_blk: control block.
- * @param cfg_head: cfg list head.
- * @param item_name: item name.
- * @param en: enable flag we got.
- * 
- * @return 0 on success, negative value if failure.
- ************************************************************************************/
-int lc_find_cfg_item_and_get_en(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_list *cfg_head,
-                                char *item_name, bool *en);
-
-/*************************************************************************************
- * @brief: find a cfg item.
- *
- * @param cfg_head: head of the list of the item.
- * @param name: name.
- *
- * @return: cfg_item.
- ************************************************************************************/
-struct lc_cfg_item *lc_find_cfg_item(struct lc_cfg_list *cfg_head, char *name);
 
 /*************************************************************************************
  * @brief: init .

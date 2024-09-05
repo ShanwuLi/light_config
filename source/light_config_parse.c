@@ -249,7 +249,7 @@ static void lc_cfg_list_update_cache(struct lc_cfg_list *cfg_head, struct lc_cfg
  *
  * @return: cfg_item.
  ************************************************************************************/
-struct lc_cfg_item *lc_find_cfg_item(struct lc_cfg_list *cfg_head, char *name)
+static struct lc_cfg_item *lc_find_cfg_item(struct lc_cfg_list *cfg_head, char *name)
 {
 	int i;
 	struct lc_cfg_item *pos = NULL;
@@ -465,6 +465,15 @@ static int lc_cfg_items_init(struct lc_ctrl_blk *ctrl_blk)
 		return ret;
 	}
 
+	ret = lc_add_cfg_item(ctrl_blk, &ctrl_blk->default_cfg_head.node,
+	                     "LC_SPACE", 8, " ", 1,
+	                      LC_ASSIGN_TYPE_DIRECT,
+	                      LC_VALUE_TYPE_NORMAL, true);
+	if (ret < 0) {
+		lc_err("Error: LC_TOPDIR item add fail\n");
+		return ret;
+	}
+
 	/* add top directory cfg item (LC_TOPDIR = "./xxx") to menu cfg list */
 	ret = lc_add_cfg_item(ctrl_blk, &ctrl_blk->menu_cfg_head.node,
 	                     "LC_TOPDIR", 9, ctrl_blk->temp_buff,
@@ -567,8 +576,9 @@ static int lc_find_cfg_item_and_cpy_val(struct lc_ctrl_blk *ctrl_blk,
  * 
  * @return 0 on success, negative value if failure.
  ************************************************************************************/
-int lc_find_cfg_item_and_get_en(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_list *cfg_head,
-                                char *item_name, bool *en)
+static int lc_find_cfg_item_and_get_en(struct lc_ctrl_blk *ctrl_blk,
+                                       struct lc_cfg_list *cfg_head,
+                                       char *item_name, bool *en)
 {
 	struct lc_cfg_item *ref_item = lc_find_cfg_item(cfg_head, item_name);
 	if (ref_item == NULL)
@@ -714,6 +724,10 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 				return -cb.next_state - 1;
 			cb.value_idx = 0;
 			cb.value_type = LC_VALUE_TYPE_MENU;
+			cb.default_item = lc_find_cfg_item(&ctrl_blk->default_cfg_head,
+			                                     ctrl_blk->item_name_buff);
+			cb.item_en = cb.item_en && ((cb.default_item == NULL) ?
+			                           true : cb.default_item->enable);
 			break;
 
 		case 101:
@@ -825,9 +839,6 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 
 		case 7050:
 			ctrl_blk->item_value_buff[cb.value_idx] = '\0';
-			ret = lc_find_cfg_item_and_get_en(ctrl_blk, &ctrl_blk->default_cfg_head,
-			                                  ctrl_blk->item_name_buff, &cb.ref_en);
-			cb.item_en = cb.item_en && ((ret < 0) ? true : cb.ref_en);
 			break;
 		
 		case 7052:
