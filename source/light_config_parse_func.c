@@ -230,9 +230,7 @@ int lc_parse_elem_start_func_range(struct lc_ctrl_blk *ctrl_blk,
  * @param ctrl_blk: control block.
  * @param pcb: parse control block.
  * @param ch: char.
- * lc_err("Error: %s out of range of item[%s] when parsing %s line %llu, col %llu\n",
- *			       pcb->default_item->value, pcb->default_item->name, ctrl_blk->file_name_buff,
- *			       pcb->line_num, ctrl_blk->colu_num);
+ *
  * @return: zero on success, else error code.
  ************************************************************************************/
 int lc_parsing_elem_func_range(struct lc_ctrl_blk *ctrl_blk,
@@ -268,7 +266,6 @@ int lc_parse_elem_end_func_range(struct lc_ctrl_blk *ctrl_blk,
 			lc_err("Error: %s out of range of item[%s] when parsing %s line %llu, col %llu\n",
 				pcb->default_item->value, pcb->default_item->name, ctrl_blk->file_name_buff,
 				pcb->line_num, ctrl_blk->colu_num);
-			printf("location:%d, pcb->select:%d, pcb->match_state:%d\n", pcb->location, pcb->select, pcb->match_state);
 			return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 		}
 		break;
@@ -279,7 +276,6 @@ int lc_parse_elem_end_func_range(struct lc_ctrl_blk *ctrl_blk,
 			lc_err("Error: %s out of range of item[%s] when parsing %s line %llu, col %llu\n",
 				pcb->default_item->value, pcb->default_item->name, ctrl_blk->file_name_buff,
 				pcb->line_num, ctrl_blk->colu_num);
-			printf("location:%d, pcb->select:%d, pcb->match_state:%d\n", pcb->location, pcb->select, pcb->match_state);
 			return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 		}
 		break;
