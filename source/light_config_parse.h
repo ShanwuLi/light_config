@@ -185,7 +185,6 @@ struct lc_ctrl_blk {
 
 struct lc_parse_ctrl_blk {
 	bool item_en;
-	bool ref_en;
 	int match_state;
 	int select;
 	int location;
@@ -208,6 +207,7 @@ struct lc_parse_ctrl_blk {
 	parse_func_t parse_elem_end;
 	parse_func_t parse_array_terminal;
 	struct lc_cfg_item *default_item;
+	struct lc_cfg_item *ref_item;
 };
 
 /*************************************************************************************

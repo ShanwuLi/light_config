@@ -8,7 +8,7 @@ XX          = n74827384732
 # CFG = [y, <n>]
 CFG         = yutieurtieur
 # BAUD = [<9600>, 115200, 648200]
-BAUD = 9600
+BAUD = 115200
 # IO = [<"string A">, "string B", "string C"]
 IO          = -$(dwefj)A
 # UART = [y, <n>]
@@ -57,4 +57,4 @@ YTRTR  = n
 
 hwfwkejfk = jk
 
-RHERHERHER = n
+RHERHERHER = <LC_SPACE>

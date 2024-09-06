@@ -567,28 +567,6 @@ static int lc_find_cfg_item_and_cpy_val(struct lc_ctrl_blk *ctrl_blk,
 }
 
 /*************************************************************************************
- * @brief: find the cfg item, if found, copy the value to dst.
- * 
- * @param ctrl_blk: control block.
- * @param cfg_head: cfg list head.
- * @param item_name: item name.
- * @param en: enable flag we got.
- * 
- * @return 0 on success, negative value if failure.
- ************************************************************************************/
-static int lc_find_cfg_item_and_get_en(struct lc_ctrl_blk *ctrl_blk,
-                                       struct lc_cfg_list *cfg_head,
-                                       char *item_name, bool *en)
-{
-	struct lc_cfg_item *ref_item = lc_find_cfg_item(cfg_head, item_name);
-	if (ref_item == NULL)
-		return LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND;
-
-	*en = ref_item->enable;
-	return 0;
-}
-
-/*************************************************************************************
  * @brief: parse the line.
  * 
  * @param ctrl_blk: control block.
@@ -674,15 +652,14 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 		
 		case 11:
 			ctrl_blk->ref_name_buff[cb.ref_name_idx] = '\0';
-			ret = lc_find_cfg_item_and_get_en(ctrl_blk, cfg_list,
-			                 ctrl_blk->ref_name_buff, &cb.ref_en);
-			if (ret < 0) {
+			cb.ref_item = lc_find_cfg_item(&ctrl_blk->menu_cfg_head, ctrl_blk->ref_name_buff);
+			if (cb.ref_item == NULL) {
 				lc_err("Error: ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
 				          line_num, ctrl_blk->colu_num);
-				return ret;
+				return LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND;
 			}
-			cb.item_en = cb.item_en && cb.ref_en;
+			cb.item_en = cb.item_en && cb.ref_item->enable;
 			break;
 
 		case 22:
@@ -778,6 +755,13 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 		
 		case 152:
 			ctrl_blk->ref_name_buff[cb.ref_name_idx] = '\0';
+			cb.ref_item = lc_find_cfg_item(&ctrl_blk->menu_cfg_head, ctrl_blk->ref_name_buff);
+			if (cb.ref_item == NULL) {
+				lc_err("Error: ref macro[%s] not found in %s line %llu, col %llu\n",
+				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
+				          line_num, ctrl_blk->colu_num);
+				return LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND;
+			}
 			break;
 		
 		case 154:
@@ -836,6 +820,35 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 					return ret;
 			}
 			break;
+		
+		case 7007:
+			cb.ref_name_idx = 0;
+			break;
+		
+		case 7008:
+			ctrl_blk->ref_name_buff[cb.ref_name_idx++] = ch;
+			break;
+		
+		case 7009:
+			ctrl_blk->ref_name_buff[cb.ref_name_idx] = '\0';
+			cb.ref_item = lc_find_cfg_item(&ctrl_blk->menu_cfg_head, ctrl_blk->ref_name_buff);
+			if (cb.ref_item == NULL) {
+				lc_err("Error: ref macro[%s] not found in %s line %llu, col %llu\n",
+				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
+				          line_num, ctrl_blk->colu_num);
+				return LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND;
+			}
+			if (cb.parsing_elem != NULL) {
+				for (int i = 0; i < cb.ref_item->value_len; i++) {
+					ret = cb.parsing_elem(ctrl_blk, &cb, cb.ref_item->value[i]);
+					if (ret < 0)
+						return -cb.next_state - 1;
+					cb.arr_elem_ch_idx++;
+				}
+				break;
+			}
+			cb.arr_elem_idx += cb.ref_item->value_len;
+			break;
 
 		case 7050:
 			ctrl_blk->item_value_buff[cb.value_idx] = '\0';
@@ -859,15 +872,14 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 
 		case 7057:
 			ctrl_blk->ref_name_buff[cb.ref_name_idx] = '\0';
-			ret = lc_find_cfg_item_and_get_en(ctrl_blk, &ctrl_blk->menu_cfg_head,
-			                                ctrl_blk->ref_name_buff, &cb.ref_en);
-			if (ret < 0) {
+			cb.ref_item = lc_find_cfg_item(&ctrl_blk->menu_cfg_head, ctrl_blk->ref_name_buff);
+			if (cb.ref_item == NULL) {
 				lc_err("Error: ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
 				          line_num, ctrl_blk->colu_num);
-				return ret;
+				return LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND;
 			}
-			ctrl_blk->logic_expr_buff[cb.expr_idx++] = (cb.ref_en ? 'y' : 'n');
+			ctrl_blk->logic_expr_buff[cb.expr_idx++] = (cb.ref_item->enable ? 'y' : 'n');
 			break;
 
 		case 8000:

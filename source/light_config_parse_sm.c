@@ -432,6 +432,8 @@ int lc_parse_state_get_next(int current_state, char ch)
 		break;
 
 	case 7002:
+		if (ch == '<')
+			return 7007;
 		if (ch != ']')
 			return 7003;
 		break;
@@ -439,6 +441,8 @@ int lc_parse_state_get_next(int current_state, char ch)
 	case 7003:
 		if (ch == ']')
 			return 7004;
+		if (ch == '<')
+			return 7007;
 		return 7003;
 
 	case 7004:
@@ -459,6 +463,26 @@ int lc_parse_state_get_next(int current_state, char ch)
 		if (ch == ']')
 			return 7050;
 		break;
+	
+	case 7007:
+		if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'))
+			return 7008;
+		break;
+	
+	case 7008:
+		if (ch == '>')
+			return 7009;
+		if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+		    (ch >= '0' && ch <= '9') || ch == '_')
+			return 7008;
+		break;
+	
+	case 7009:
+		if (ch == '<')
+			return 7007;
+		if (ch == ']')
+			return 7004;
+		return 7003;
 
 	case 7050:
 		if (ch == ' ')

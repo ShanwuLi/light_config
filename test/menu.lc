@@ -6,20 +6,23 @@ ZZ     ?= fwefefwe
 UU     := wgwg
 afasgasg     = n
 
-
+DGEHK = 00
 
 dhwjhjweh += [] & <UU>
 
-BAUD   ?= [@menu([9600], [11520], [115200], [dhweckwev])] & (<ZZ> & !<IO> | <UU>)
+BAUD   ?= [@menu([960035], [960078], [1152<DGEHK>], [dhweckwev])]
 CSRC-n   =   [<BAUD>]
 TDWUEFYUEWYF = wggww
 
-GDJHECJ = [@range([1878], [7878.78787810000])]
+DEWFE = 78787810000
+
+GDJHECJ = [@range([1878], [1878.<DEWFE>])]
+
 
 SOURCE-<dehfh> = CSRC/ZZ/YY<TDWUEFYUEWYF>
 gwgewhwh  = [*] & !<dehfh>
 
-dhwejkc = [@<CSRC> ? ([1], [0])]
+dhwejkc-<dehfh> = [@<CSRC> ? ([<TDWUEFYUEWYF>], [<TDWUEFYUEWYF>747329<TDWUEFYUEWYF>])]
 
 dwjekwje += flek
 
