@@ -188,6 +188,8 @@ struct lc_parse_ctrl_blk {
 	int match_state;
 	int select;
 	int location;
+	int default_sign;
+	int curr_sign;
 	uint8_t assign_type;
 	uint8_t value_type;
 	int char_idx;

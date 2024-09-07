@@ -190,6 +190,7 @@ int lc_parse_func_menu_init(struct lc_ctrl_blk *ctrl_blk, struct lc_parse_ctrl_b
 static int lc_parse_elem_start_func_range(struct lc_ctrl_blk *ctrl_blk,
                                 struct lc_parse_ctrl_blk *pcb, char ch)
 {
+	pcb->curr_sign = 0;
 	pcb->match_state = 0; /* compare */
 	pcb->select = 0; /* dot location */
 	return 0;
@@ -207,14 +208,60 @@ static int lc_parse_elem_start_func_range(struct lc_ctrl_blk *ctrl_blk,
 static int lc_parsing_elem_func_range(struct lc_ctrl_blk *ctrl_blk,
                             struct lc_parse_ctrl_blk *pcb, char ch)
 {
+	char default_ch;
+	int default_vel_ch_idx;
+
+	if (ch == '-' && pcb->curr_sign == 0) {
+		pcb->curr_sign = 1;
+		return 0;
+	}
+
 	if (ch == '.' && pcb->select == 0)
 		pcb->select = pcb->arr_elem_ch_idx;
 
 	if (pcb->match_state != 0 || pcb->arr_elem_ch_idx >= pcb->default_item->value_len)
 		return 0;
 
-	pcb->match_state = ch - pcb->default_item->value[pcb->arr_elem_ch_idx];
+	default_vel_ch_idx = pcb->arr_elem_ch_idx - pcb->curr_sign + pcb->default_sign;
+	default_ch = pcb->default_item->value[default_vel_ch_idx];
+	pcb->match_state = ch - default_ch;
+
 	return 0;
+}
+
+/*************************************************************************************
+ * @brief: compare current value to default value.
+ *
+ * @param ctrl_blk: control block.
+ * @param pcb: parse control block.
+ *
+ * @return: current value - default value.
+ ************************************************************************************/
+static int lc_compare_range(struct lc_ctrl_blk *ctrl_blk, struct lc_parse_ctrl_blk *pcb)
+{
+	int ret = 0;
+
+	if (pcb->curr_sign != pcb->default_sign)
+		return pcb->default_sign - pcb->curr_sign;
+
+	if (pcb->select != pcb->location) {
+		ret = pcb->select - pcb->location;
+		goto out;
+	}
+
+	if (pcb->match_state != 0) {
+		ret = pcb->match_state;
+		goto out;
+	}
+
+	if (pcb->arr_elem_ch_idx != pcb->default_item->value_len)
+		ret = pcb->arr_elem_ch_idx - pcb->default_item->value_len;
+
+out:
+	if (pcb->default_sign + pcb->curr_sign != 0)
+		ret = -ret;
+
+	return ret;
 }
 
 /*************************************************************************************
@@ -229,39 +276,40 @@ static int lc_parsing_elem_func_range(struct lc_ctrl_blk *ctrl_blk,
 static int lc_parse_elem_end_func_range(struct lc_ctrl_blk *ctrl_blk,
                               struct lc_parse_ctrl_blk *pcb, char ch)
 {
+	int compare_curr_default;
+
 	pcb->select = (pcb->select == 0) ? pcb->arr_elem_ch_idx : pcb->select;
+	compare_curr_default = lc_compare_range(ctrl_blk, pcb);
 
 	switch (pcb->arr_elem_idx) {
 	case 0:
-		if (pcb->select > pcb->location || pcb->match_state > 0) {
-			lc_err("Error: %s out of range of item[%s] when parsing %s line %llu, col %llu\n",
+		if (compare_curr_default > 0) {
+			lc_err("Error: %s out of range left of item[%s] when parsing %s line %llu, col %llu, ret:%d\n",
 				pcb->default_item->value, pcb->default_item->name, ctrl_blk->file_name_buff,
-				pcb->line_num, ctrl_blk->colu_num);
+				pcb->line_num, ctrl_blk->colu_num, compare_curr_default);
+			//printf("select:%d, arr_elem_ch_idx:%d, default_sign:%d, curr_sign:%d, match_state:%d\n",
+			//        pcb->select, pcb->arr_elem_ch_idx, pcb->default_sign, pcb->curr_sign, pcb->match_state);
 			return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 		}
 		break;
 
 	case 1:
-		if (pcb->select < pcb->location || pcb->match_state < 0) {
-			lc_err("Error: %s out of range of item[%s] when parsing %s line %llu, col %llu\n",
+		if (compare_curr_default < 0) {
+			lc_err("Error: %s out of range right of item[%s] when parsing %s line %llu, col %llu, ret:%d\n",
 				pcb->default_item->value, pcb->default_item->name, ctrl_blk->file_name_buff,
-				pcb->line_num, ctrl_blk->colu_num);
+				pcb->line_num, ctrl_blk->colu_num, compare_curr_default);
+			//printf("select:%d, arr_elem_ch_idx:%d, default_sign:%d, curr_sign:%d, match_state:%d\n",
+			//        pcb->select, pcb->arr_elem_ch_idx, pcb->default_sign, pcb->curr_sign, pcb->match_state);
 			return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 		}
-
-		if (pcb->select == pcb->location && pcb->match_state == 0 &&
-		    pcb->arr_elem_ch_idx < pcb->default_item->value_len) {
-				lc_err("Error: %s out of range of item[%s] when parsing %s line %llu, col %llu\n",
-				pcb->default_item->value, pcb->default_item->name, ctrl_blk->file_name_buff,
-				pcb->line_num, ctrl_blk->colu_num);
-				return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
-			}
 		break;
 
 	default:
 		lc_err("Error: item[%s] has over 2 arguments of range func in %s line %llu, col %llu\n",
 		        pcb->default_item->name, ctrl_blk->file_name_buff, pcb->line_num,
 		        ctrl_blk->colu_num);
+		//printf("select:%d, arr_elem_ch_idx:%d, default_sign:%d, curr_sign:%d, match_state:%d\n",
+		//        pcb->select, pcb->arr_elem_ch_idx, pcb->default_sign, pcb->curr_sign, pcb->match_state);
 		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 	}
 
@@ -306,6 +354,10 @@ int lc_parse_func_range_init(struct lc_ctrl_blk *ctrl_blk, struct lc_parse_ctrl_
 		        pcb->line_num, ctrl_blk->colu_num);
 		return LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND;
 	}
+
+	pcb->default_sign = 0;
+	if (pcb->default_item->value[0] == '-')
+		pcb->default_sign = 1;
 
 	pcb->location = pcb->default_item->value_len;
 	for (i = 0; i < pcb->default_item->value_len; i++) {

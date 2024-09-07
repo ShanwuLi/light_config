@@ -31,8 +31,8 @@ SOFTWARE.
 #define DGEHK   00
 #define TDWUEFYUEWYF   wggww
 #define DEWFE   78787810000
-#define GDJHECJ   1878.78787810000
 #define SOURCE   CSRC/ZZ/YYwggww
+#define CONFIG_PL_TASK_PRIORITIES_MAX   -0
 #define dhwejkc   wggww747329wggww
 #define OS_TOPDIR   .
 #define CXXSRC   ./dhwehe.c
