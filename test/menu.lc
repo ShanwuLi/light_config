@@ -39,13 +39,12 @@ RHERHERHER   ?= [@menu([ ], [11520], [115200], [dhweckwev])]
 
 -include "test_default.cfg"
 
-CONFIG_TEST1       = yde
-CONFIG_TEST2       = ykjk
-	CONFIG_TEST3   = JFJKJ
+CONFIG_TEST1                        = yde
+CONFIG_TEST2                        = ykjk
+	CONFIG_TEST3                    = JFJKJ
 	-include "test_default.cfg"
-	CONFIG_PL_T    = y
-		CONFIG_PL_ = 2
+	CONFIG_PL_T                     = [hdejkde] & !<RHERHERHER> & !<UU>
+		CONFIG_PL_                  = 2
 		-include "test_default.cfg"
-	CONFIGDHJEHJE  = HJH
-CONFIG_HDEJ        = JEH
-
+	CONFIGDHJEHJE                   = HJH
+CONFIG_HDEJ                         = JEH

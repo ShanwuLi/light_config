@@ -527,7 +527,7 @@ int lc_parse_state_get_next(int current_state, char ch)
 	case 7054:
 		if (ch == '&' || ch == '|' || ch == '!' || ch == '(' || ch == ')')
 			return 7053;
-		if (ch == ' ')
+		if (ch == ' ' || ch == KEY_TAB)
 			return 7054;
 		if (ch == '<')
 			return 7055;
@@ -551,7 +551,7 @@ int lc_parse_state_get_next(int current_state, char ch)
 			return LC_PARSE_STATE_DEPEND_CFG;
 		if (ch == '&' || ch == '|' || ch == '!' || ch == '(' || ch == ')')
 			return 7053;
-		if (ch == ' ')
+		if (ch == ' ' || ch == KEY_TAB)
 			return 7054;
 		break;
 
