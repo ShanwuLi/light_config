@@ -36,8 +36,29 @@ SOFTWARE.
 #define dhwejkc   wggww747329wggww
 #define OS_TOPDIR   .
 #define CXXSRC   ./dhwehe.c
+#define XX   n74827384732
+#define CFG   yutieurtieur
+#define BAUD   9600
+#define IO   -$(dwefj)A
+#define GDJHECJ   0x800
+#define MY_PATH   subdir
+#define yudywud
+#define CFG_UART_INT   "r387r8347t"
+#define CFG_UART_INT   'r78374t8347t'
+#define CFG_UART_INT   672684738
+#define CFG_UART_INT   dwklwekclewn72384723952
+#define SUYUFEU   242%26743680350yiwi/stm32f103.c
+#define YDYRYE   F:/light_config/test/DLWLEW
+#define SUBDIR   F:/light_config/test/subdir
+#define HJHFJHDJ   F:/light_config/test/DLWLEW/74932859
+#define TYTYTY   HEFHKEJF:/light_config/test/DLWLEWKWJEKJC dwklwekclewn72384723952 wegweg"jdoejf"
+#define fehfherjhj   djwjkwejcwkelc kjck ej "dkjwekf"
+#define uudiweuci   "hde""wjk  "hcicijwijviwejivjew
+#define dhwejkc
+#define uudiweuci   "hde""wjk  "hcicijwijviwejivjew
+#define hwfwkejfk   jk
 #define CONFIG_TEST1   yde
-#define CONFIG_TEST2   ykjk
+#define CONFIG_TEST2
 #define CONFIG_TEST3   JFJKJ
 #define XX   n74827384732
 #define CFG   yutieurtieur
@@ -62,5 +83,8 @@ SOFTWARE.
 #define hwfwkejfk   jk
 #define CONFIGDHJEHJE   HJH
 #define CONFIG_HDEJ   JEH
+#define CONFIG_PL_HI_WORKQUEUE_SUPPORT
+#define CONFIG_PL_HI_WORKQUEUE_TASK_STACK_SIZE   1024
+#define CONFIG_PL_HI_WORKQUEUE_FIFO_CAPACITY   128
 
 #endif /* __CONFIG_H__*/

@@ -688,10 +688,6 @@ static int lc_process_ident_dependency(struct lc_ctrl_blk *ctrl_blk,
 	struct lc_cfg_item *cfg_item;
 	struct lc_line_indent_item ident_item;
 
-	/* only process the ident line */
-	if (pcb->line_ident_num == 0)
-		return 0;
-
 	cfg_item = lc_get_tail_item(&ctrl_blk->menu_cfg_head);
 	if (cfg_item == NULL) {
 		lc_err("Error: lc_get_tail_item failed\n");

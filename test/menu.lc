@@ -40,12 +40,23 @@ RHERHERHER   ?= [@menu([ ], [11520], [115200], [dhweckwev])]
 -include-n "test_default.cfg"
 
 CONFIG_TEST1                        = yde
-CONFIG_TEST2                        = ykjk
+CONFIG_TEST2                        = y
 	# gdjehfj
 	CONFIG_TEST3                    = JFJKJ
 	-include "test_default.cfg"
-	CONFIG_PL_T                     = [<CONFIG_TEST1>] & !<RHERHERHER> & !<UU>
-		CONFIG_PL_                  = 2
+	CONFIG_PL_T-n                     = [<CONFIG_TEST1>] & !<RHERHERHER> & !<UU>
+		CONFIG_PL_                  = n
 		-include "test_default.cfg"
 	CONFIGDHJEHJE                   = HJH
 CONFIG_HDEJ                         = JEH
+
+# High priority workqueue configurations
+CONFIG_PL_HI_WORKQUEUE_SUPPORT               = [@menu([y], [n])]
+	CONFIG_PL_HI_WORKQUEUE_TASK_STACK_SIZE   = [@range([256], [4096])]
+	CONFIG_PL_HI_WORKQUEUE_FIFO_CAPACITY     = [@range([128], [4096])]
+
+# Low priority workqueue configurations
+CONFIG_PL_LO_WORKQUEUE_SUPPORT               = [@menu([y], [n])]
+	CONFIG_PL_LO_WORKQUEUE_TASK_STACK_SIZE   = [@range([128], [4096])]
+	CONFIG_PL_LO_WORKQUEUE_TASK_PRIORITY     = [@range([4], [5])]
+	CONFIG_PL_LO_WORKQUEUE_FIFO_CAPACITY     = [@range([128], [4096])]
