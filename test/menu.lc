@@ -41,6 +41,7 @@ RHERHERHER   ?= [@menu([ ], [11520], [115200], [dhweckwev])]
 
 CONFIG_TEST1                        = yde
 CONFIG_TEST2                        = ykjk
+	# gdjehfj
 	CONFIG_TEST3                    = JFJKJ
 	-include "test_default.cfg"
 	CONFIG_PL_T                     = [<CONFIG_TEST1>] & !<RHERHERHER> & !<UU>

@@ -17,6 +17,8 @@ int lc_parse_state_get_next(int current_state, char ch)
 	case 0:
 		if (ch == KEY_TAB)
 			return 0;
+		if (ch == '#' || ch == '\n')
+			return 28;
 		if (ch == '-')
 			return 12;
 		if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'))

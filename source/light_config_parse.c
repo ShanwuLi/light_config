@@ -762,10 +762,6 @@ static int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 		return LC_PARSE_RES_ERR_CTRL_BLK_INVALID;
 	}
 
-	/* skip comment line */
-	if (ctrl_blk->line_buff[0] == '#' || ctrl_blk->line_buff[0] == '\n')
-		return LC_PARSE_RES_OK_NORMAL_CFG;
-
 	cfg_list = is_default_cfg ? &ctrl_blk->default_cfg_head
 	                          : &ctrl_blk->menu_cfg_head;
 	/* initialize parse control block */
@@ -881,6 +877,10 @@ static int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 		case 27:
 			cb.item_en = false;
 			break;
+
+		/* skip comment line */
+		case 28:
+			return LC_PARSE_RES_OK_NORMAL_CFG;
 		
 		case 100:
 			if (is_default_cfg)
