@@ -100,7 +100,7 @@ static void lc_list_add_node_at_tail(struct lc_list_node *head, struct lc_list_n
 /*************************************************************************************
  * @brief: push a cfg file to the stack.
  * 
- * @param cfg_file_stk: cfg file stack.
+ * @param ctrl_blk: control block.
  * @param item: item of the cfg file.
  * @return: zero on success, other on failure.
  ************************************************************************************/
@@ -109,6 +109,7 @@ static int lc_cfg_file_push(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_file_ite
 	void *name;
 	struct lc_cfg_file_stk *stk = &(ctrl_blk->cfg_file_stk);
 
+	stk->sp++;
 	if (stk->sp >= stk->depth) {
 		lc_err("Error: push fail, cfg file num[%lld] overflow[%llu]\n", stk->sp, stk->depth);
 		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
@@ -124,7 +125,6 @@ static int lc_cfg_file_push(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_file_ite
 	stk->item_stk[stk->sp].file_name = name;
 	stk->item_stk[stk->sp].line_num = item->line_num;
 	stk->item_stk[stk->sp].position = item->position;
-	stk->sp++;
 
 	return 0;
 }
@@ -132,7 +132,7 @@ static int lc_cfg_file_push(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_file_ite
 /*************************************************************************************
  * @brief: push a cfg file to the stack.
  * 
- * @param cfg_file_stk: cfg file stack.
+ * @param ctrl_blk: control block.
  * @param item: item of the cfg file.
  * @return: zero on success, other on failure.
  ************************************************************************************/
@@ -141,26 +141,48 @@ static int lc_cfg_file_pop(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_file_item
 	void *name;
 	struct lc_cfg_file_stk *stk = &(ctrl_blk->cfg_file_stk);
 
-	if (stk->sp < 0) {
+	if (stk->sp <= 0) {
 		lc_err("Error: pop fial, cfg file num[%lld] overflow\n", stk->sp);
 		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
 	}
 
-	stk->sp--;
 	name = stk->item_stk[stk->sp].file_name;
 	memcpy(ctrl_blk->file_name_buff, name, strlen(name) + 1);
 	item->file_name = ctrl_blk->file_name_buff;
 	item->line_num = stk->item_stk[stk->sp].line_num;
 	item->position = stk->item_stk[stk->sp].position;
 	free(name);
+	stk->sp--;
 	return 0;
 }
 
 /*************************************************************************************
- * @brief: push a cfg file to the stack.
+ * @brief: get the previous cfg file name.
  * 
- * @param cfg_file_stk: cfg file stack.
- * @param item: item of the cfg file.
+ * @param ctrl_blk: control block.
+ * @return: previous cfg file name.
+ ************************************************************************************/
+static char *lc_cfg_file_get_prev_name(struct lc_ctrl_blk *ctrl_blk)
+{
+	void *name;
+	struct lc_cfg_file_stk *stk = &(ctrl_blk->cfg_file_stk);
+
+	if (stk->sp >= stk->depth) {
+		lc_err("Error: cfg stk get prev fail, num[%lld] overflow[%llu]\n",
+		        stk->sp, stk->depth);
+		return NULL;
+	}
+
+	name = ((stk->sp <= 0) ? NULL : stk->item_stk[stk->sp].file_name);
+	return name;
+}
+
+/*************************************************************************************
+ * @brief: push a ident item to the stack.
+ * 
+ * @param ctrl_blk: control block.
+ * @param item: the ident item.
+ * 
  * @return: zero on success, other on failure.
  ************************************************************************************/
 static int lc_line_ident_push(struct lc_ctrl_blk *ctrl_blk, struct lc_line_indent_item *item)
@@ -180,17 +202,17 @@ static int lc_line_ident_push(struct lc_ctrl_blk *ctrl_blk, struct lc_line_inden
 }
 
 /*************************************************************************************
- * @brief: push a cfg file to the stack.
+ * @brief: pop a ident item to the stack.
  * 
- * @param cfg_file_stk: cfg file stack.
- * @param item: item of the cfg file.
+ * @param ctrl_blk: control block.
+ *
  * @return: zero on success, other on failure.
  ************************************************************************************/
 static int lc_line_ident_pop(struct lc_ctrl_blk *ctrl_blk)
 {
 	struct lc_line_ident_stk *stk = &(ctrl_blk->line_ident_stk);
 
-	if (stk->sp < 1) {
+	if (stk->sp <= 0) {
 		lc_err("Error: line ident push fail, num[%lld] overflow[%llu]\n",
 		        stk->sp, stk->depth);
 		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
@@ -201,17 +223,18 @@ static int lc_line_ident_pop(struct lc_ctrl_blk *ctrl_blk)
 }
 
 /*************************************************************************************
- * @brief: push a cfg file to the stack.
+ * @brief: peek a ident item to the stack.
  * 
- * @param cfg_file_stk: cfg file stack.
- * @param item: item of the cfg file.
+ * @param ctrl_blk: control block.
+ * @param item: the ident item.
+ * 
  * @return: zero on success, other on failure.
  ************************************************************************************/
 static int lc_line_ident_peek_top(struct lc_ctrl_blk *ctrl_blk, struct lc_line_indent_item *item)
 {
 	struct lc_line_ident_stk *stk = &(ctrl_blk->line_ident_stk);
 
-	if (stk->sp < 1 || stk->sp >= stk->depth) {
+	if (stk->sp <= 0 || stk->sp >= stk->depth) {
 		lc_err("Error: line ident push fail, num[%lld] overflow[%llu]\n",
 		        stk->sp, stk->depth);
 		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
@@ -220,21 +243,6 @@ static int lc_line_ident_peek_top(struct lc_ctrl_blk *ctrl_blk, struct lc_line_i
 	item->indent_num = stk->item_stk[stk->sp].indent_num;
 	item->item = stk->item_stk[stk->sp].item;
 	return 0;
-}
-
-/*************************************************************************************
- * @brief: get the previous cfg file name.
- * 
- * @param ctrl_blk: control block.
- * @return: previous cfg file name.
- ************************************************************************************/
-static char *lc_cfg_file_get_prev_name(struct lc_ctrl_blk *ctrl_blk)
-{
-	void *name;
-	struct lc_cfg_file_stk *stk = &(ctrl_blk->cfg_file_stk);
-
-	name = ((stk->sp <= 0) ? NULL : stk->item_stk[stk->sp - 1].file_name);
-	return name;
 }
 
 /*************************************************************************************
@@ -665,6 +673,14 @@ static int lc_find_cfg_item_and_cpy_val(struct lc_ctrl_blk *ctrl_blk,
 	return ref_item->value_len;
 }
 
+/*************************************************************************************
+ * @brief: process ident line with dependency config.
+ * 
+ * @param ctrl_blk: control block.
+ * @param pcb: parse control block.
+ * 
+ * @param zero on success, negative value on error.
+ ************************************************************************************/
 static int lc_process_ident(struct lc_ctrl_blk *ctrl_blk, struct lc_parse_ctrl_blk *pcb)
 {
 	int ret;
