@@ -587,7 +587,7 @@ static int lc_cfg_items_init(struct lc_ctrl_blk *ctrl_blk)
 	ident_item.item = cfg_item;
 	ret = lc_line_ident_push(ctrl_blk, &ident_item);
 	if (ret < 0) {
-		lc_err("Error: line_ident_push fail\n");
+		lc_err("Error: line ident push fail\n");
 		return ret;
 	}
 
@@ -731,7 +731,7 @@ static int lc_process_ident_dependency(struct lc_ctrl_blk *ctrl_blk,
 		return 0;
 	}
 
-	lc_err("Error: indent_num[%lu] is invalid\n", pcb->line_ident_num);
+	lc_err("Error: indent num[%lu] is invalid\n", pcb->line_ident_num);
 	return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 }
 
@@ -1034,6 +1034,8 @@ static int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 
 		case 7050:
 			ctrl_blk->item_value_buff[cb.value_idx] = '\0';
+			if (!cb.item_en)
+				ctrl_blk->line_buff[cb.char_idx] = '\n';
 			break;
 		
 		case 7052:
