@@ -60,3 +60,5 @@ CONFIG_PL_LO_WORKQUEUE_SUPPORT               = [@menu([y], [n])]
 	CONFIG_PL_LO_WORKQUEUE_TASK_STACK_SIZE   = [@range([128], [4096])]
 	CONFIG_PL_LO_WORKQUEUE_TASK_PRIORITY     = [@range([4], [5])]
 	CONFIG_PL_LO_WORKQUEUE_FIFO_CAPACITY     = [@range([128], [4096])]
+
+-include-n    "test_default.cfg"
