@@ -278,7 +278,7 @@ int light_config_parse_cfg_file(struct lc_ctrl_blk *ctrl_blk, char *cfg_file,
  *
  * @return: void.
  ************************************************************************************/
-void lc_dump_cfg(struct lc_cfg_list *cfg_head);
+void lc_dump_cfg_item_list(struct lc_cfg_list *cfg_head);
 
 /*************************************************************************************
  * @brief: free memory.

@@ -37,13 +37,13 @@ CXXSRC += <OS_TOPDIR>/dwefewvewve.c
 RHERHERHER   ?= [@menu([ ], [11520], [115200], [dhweckwev])]
 
 
--include "test_default.cfg"
+-include-n "test_default.cfg"
 
 CONFIG_TEST1                        = yde
 CONFIG_TEST2                        = ykjk
 	CONFIG_TEST3                    = JFJKJ
 	-include "test_default.cfg"
-	CONFIG_PL_T                     = [hdejkde] & !<RHERHERHER> & !<UU>
+	CONFIG_PL_T                     = [<CONFIG_TEST1>] & !<RHERHERHER> & !<UU>
 		CONFIG_PL_                  = 2
 		-include "test_default.cfg"
 	CONFIGDHJEHJE                   = HJH

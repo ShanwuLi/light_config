@@ -235,7 +235,7 @@ static int lc_line_ident_peek_top(struct lc_ctrl_blk *ctrl_blk, struct lc_line_i
 	struct lc_line_ident_stk *stk = &(ctrl_blk->line_ident_stk);
 
 	if (stk->sp <= 0 || stk->sp >= stk->depth) {
-		lc_err("Error: line ident push fail, num[%lld] overflow[%llu]\n",
+		lc_err("Error: line ident peek stk top fail, num[%lld] overflow[%llu]\n",
 		        stk->sp, stk->depth);
 		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
 	}
@@ -253,7 +253,7 @@ static int lc_line_ident_peek_top(struct lc_ctrl_blk *ctrl_blk, struct lc_line_i
  *
  * @return: void.
  ************************************************************************************/
-void lc_dump_cfg(struct lc_cfg_list *cfg_head)
+void lc_dump_cfg_item_list(struct lc_cfg_list *cfg_head)
 {
 	struct lc_cfg_item *pos;
 
@@ -681,7 +681,8 @@ static int lc_find_cfg_item_and_cpy_val(struct lc_ctrl_blk *ctrl_blk,
  * 
  * @param zero on success, negative value on error.
  ************************************************************************************/
-static int lc_process_ident(struct lc_ctrl_blk *ctrl_blk, struct lc_parse_ctrl_blk *pcb)
+static int lc_process_ident_dependency(struct lc_ctrl_blk *ctrl_blk,
+                                      struct lc_parse_ctrl_blk *pcb)
 {
 	int ret;
 	struct lc_cfg_item *cfg_item;
@@ -699,7 +700,7 @@ static int lc_process_ident(struct lc_ctrl_blk *ctrl_blk, struct lc_parse_ctrl_b
 
 	ret = lc_line_ident_peek_top(ctrl_blk, &ident_item);
 	if (ret < 0) {
-		lc_err("Error: lc_line_ident_peek_top failed, ret:%d\n", ret);
+		lc_err("Error: peek stk top failed, ret:%d\n", ret);
 		return ret;
 	}
 
@@ -714,20 +715,20 @@ static int lc_process_ident(struct lc_ctrl_blk *ctrl_blk, struct lc_parse_ctrl_b
 		pcb->item_en = cfg_item->enable;
 		ret = lc_line_ident_push(ctrl_blk, &ident_item);
 		if (ret < 0)
-			lc_err("Error: lc_line_ident_push failed, ret:%d\n", ret);
+			lc_err("Error: ident push failed, ret:%d\n", ret);
 		return ret;
 	}
 
 	if (pcb->line_ident_num == ident_item.indent_num - 1) {
 		ret = lc_line_ident_pop(ctrl_blk);
 		if (ret < 0) {
-			lc_err("Error: lc_line_ident_pop failed, ret:%d\n", ret);
+			lc_err("Error: ident pop failed, ret:%d\n", ret);
 			return ret;
 		}
 
 		ret = lc_line_ident_peek_top(ctrl_blk, &ident_item);
 		if (ret < 0) {
-			lc_err("Error: lc_line_ident_peek_top failed, ret:%d\n", ret);
+			lc_err("Error: peek stk top failed, ret:%d\n", ret);
 			return ret;
 		}
 		pcb->item_en = ident_item.item->enable;
@@ -788,7 +789,7 @@ static int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			break;
 
 		case 1:
-			ret = lc_process_ident(ctrl_blk, &cb);
+			ret = lc_process_ident_dependency(ctrl_blk, &cb);
 			if (ret < 0) {
 				lc_err("Error: lc_process_ident failed, ret:%d\n", ret);
 				return ret;
@@ -1114,7 +1115,7 @@ static int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 
 		case LC_PARSE_STATE_INCLUDE:
 			lc_info("path:%s\n", ctrl_blk->inc_path_buff);
-			ret = lc_process_ident(ctrl_blk, &cb);
+			ret = lc_process_ident_dependency(ctrl_blk, &cb);
 			if (ret < 0) {
 				lc_err("Error: lc_process_ident failed, ret:%d\n", ret);
 				return ret;
