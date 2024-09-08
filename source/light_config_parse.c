@@ -701,14 +701,14 @@ static int lc_process_ident_dependency(struct lc_ctrl_blk *ctrl_blk,
 	}
 
 	if (pcb->line_ident_num == ident_item.indent_num) {
-		pcb->item_en &= ident_item.item->enable;
+		pcb->item_en = pcb->item_en && ident_item.item->enable;
 		return 0;
 	}
 
 	if (pcb->line_ident_num == ident_item.indent_num + 1) {
 		ident_item.indent_num = pcb->line_ident_num;
 		ident_item.item = cfg_item;
-		pcb->item_en &= cfg_item->enable;
+		pcb->item_en = pcb->item_en && cfg_item->enable;
 		ret = lc_line_ident_push(ctrl_blk, &ident_item);
 		if (ret < 0)
 			lc_err("Error: ident push failed, ret:%d\n", ret);
@@ -727,7 +727,7 @@ static int lc_process_ident_dependency(struct lc_ctrl_blk *ctrl_blk,
 			lc_err("Error: peek stk top failed, ret:%d\n", ret);
 			return ret;
 		}
-		pcb->item_en &= ident_item.item->enable;
+		pcb->item_en = pcb->item_en && ident_item.item->enable;
 		return 0;
 	}
 
