@@ -12,6 +12,8 @@
 #define LC_LINE_BUFF_SIZE_MAX              (8192)
 #define LC_MEM_UPLIMIT                     (128 * 1024 * 1024)
 
+typedef long int                           l_t;
+typedef unsigned long                      ul_t;
 typedef long long                          ll_t;
 typedef unsigned long long                 ull_t;
 
@@ -53,6 +55,8 @@ typedef unsigned long long                 ull_t;
 #define lc_list_first_entry(head, entry_type, member) \
 	container_of((head)->next, entry_type, member)
 
+#define lc_list_last_entry(head, entry_type, member) \
+	container_of((head)->prev, entry_type, member)
 
 struct lc_ctrl_blk;
 struct lc_parse_ctrl_blk;
@@ -75,8 +79,7 @@ enum lc_parse_res {
 	LC_PARSE_RES_ERR_NORMAL_CFG_INVALID,
 	LC_PARSE_RES_ERR_FILE_NOT_FOUND,
 	/* ok code */
-	LC_PARSE_RES_OK_DEPEND_CFG = 0,
-	LC_PARSE_RES_OK_NORMAL_CFG,
+	LC_PARSE_RES_OK_NORMAL_CFG = 0,
 	LC_PARSE_RES_OK_INCLUDE,
 };
 
@@ -85,9 +88,11 @@ enum lc_assign_type {
 	LC_ASSIGN_TYPE_IMMEDIATE,    /* := */
 	LC_ASSIGN_TYPE_CONDITIONAL,  /* ?= */
 	LC_ASSIGN_TYPE_ADDITION,     /* += */
+	LC_ASSIGN_TYPE_PATH,         /* -include */
 };
 
 enum lc_value_type {
+	LC_VALUE_TYPE_PATH,          /* -include "xxx" */
 	LC_VALUE_TYPE_NORMAL,        /* macro =  xxx */
 	LC_VALUE_TYPE_MENU,          /* macro = [xxx] & */
 };
@@ -130,6 +135,17 @@ struct lc_cfg_file_stk {
 	ull_t depth;
 	ll_t sp;
 	struct lc_cfg_file_item *item_stk;
+};
+
+struct lc_line_indent_item {
+	ul_t indent_num;
+	struct lc_cfg_item *item;
+};
+
+struct lc_line_ident_stk {
+	ull_t depth;
+	ll_t sp;
+	struct lc_line_indent_item *item_stk;
 };
 
 struct lc_mem_blk_ctrl {
@@ -181,9 +197,11 @@ struct lc_ctrl_blk {
 	struct lc_cfg_list default_cfg_head;
 	struct lc_mem_blk_ctrl mem_blk_ctrl;
 	struct lc_cfg_file_stk cfg_file_stk;
+	struct lc_line_ident_stk line_ident_stk;
 };
 
 struct lc_parse_ctrl_blk {
+	ul_t line_ident_num;
 	bool item_en;
 	int match_state;
 	int select;
@@ -210,6 +228,7 @@ struct lc_parse_ctrl_blk {
 	parse_func_t parse_array_terminal;
 	struct lc_cfg_item *default_item;
 	struct lc_cfg_item *ref_item;
+	struct lc_cfg_item *curr_item;
 };
 
 /*************************************************************************************
@@ -237,7 +256,7 @@ bool lc_list_is_empty(struct lc_list_node *head);
  ************************************************************************************/
 int light_config_init(struct lc_ctrl_blk *ctrl_blk, ull_t mem_uplimit,
                       ull_t line_buff_size, ull_t cfg_file_num_max,
-                      ull_t each_mem_blk_size);
+                      ul_t line_ident_max, ull_t each_mem_blk_size);
 
 /*************************************************************************************
  * @brief: parse the config file.

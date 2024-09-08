@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
 		return ret;
 	}
 
-	ret = light_config_init(&lc_cb, 128 * 1024 * 1024, 8192, 10240, 16 * 1024 * 1024);
+	ret = light_config_init(&lc_cb, 128 * 1024 * 1024, 8192, 10240, 64, 16 * 1024 * 1024);
 	if (ret < 0) {
 		lc_err("Fail to init light config, ret:%d\n", ret);
 		return ret;

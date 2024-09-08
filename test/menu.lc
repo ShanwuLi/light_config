@@ -21,9 +21,10 @@ DEWFE = 78787810000
 SOURCE-<dehfh> = CSRC/ZZ/YY<TDWUEFYUEWYF>
 gwgewhwh  = [*] & !<dehfh>
 
-CONFIG_PL_TASK_PRIORITIES_MAX = [@range([-0], [2.0481])]
+CONFIG_PL_TASK_PRIORITIES_MAX = [@range([-0], [2.04])]
 
-dhwejkc-<dehfh> = [@<CSRC> ? ([<TDWUEFYUEWYF>], [<TDWUEFYUEWYF>747329<TDWUEFYUEWYF>])]
+dhwejkc-<dehfh> = [@<CSRC> ? ([<TDWUEFYUEWYF>],\
+		[<TDWUEFYUEWYF>747329<TDWUEFYUEWYF>])]
 
 dwjekwje += flek
 
@@ -37,3 +38,16 @@ RHERHERHER   ?= [@menu([ ], [11520], [115200], [dhweckwev])]
 
 
 -include "test_default.cfg"
+
+
+
+CONFIG_TEST1       = yde
+CONFIG_TEST2       = ykjk
+	CONFIG_TEST3   = JFJKJ
+	-include "test_default.cfg"
+	CONFIG_PL_T    = n
+		CONFIG_PL_ = 2
+		-include "test_default.cfg"
+	CONFIGDHJEHJE  = HJH
+CONFIG_HDEJ        = JEH
+

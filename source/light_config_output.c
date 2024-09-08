@@ -83,6 +83,29 @@ static int lc_output_cfg_to_merged_file(struct lc_cfg_list *cfg_list, char *line
 	/* output each cfg item to file */
 	lc_list_for_each_entry(pos, &cfg_list->node, struct lc_cfg_item, node) {
 		char_idx = 0;
+
+		/* process include file type */
+		if (pos->assign_type == LC_ASSIGN_TYPE_PATH) {
+			memcpy(line_buffer, "# -include", 10);
+			char_idx += 10;
+	
+			if (!pos->enable) {
+				line_buffer[char_idx++] = '-';
+				line_buffer[char_idx++] = 'n';
+			}
+	
+			line_buffer[char_idx++] = ' ';
+			line_buffer[char_idx++] = '"';
+			memcpy(line_buffer + char_idx, pos->value, pos->value_len);
+			char_idx += pos->value_len;
+			line_buffer[char_idx++] = '"';
+			line_buffer[char_idx++] = '\n';
+			/* write the line to file */
+			fwrite(line_buffer, char_idx, 1, merged_cfg_fp);
+			line_num++;
+			continue;
+		}
+
 		/* write the comment line to file */
 		if (!pos->enable || line_num == 0) {
 			line_buffer[char_idx++] = '#';
@@ -190,6 +213,13 @@ static int lc_output_cfg_to_mk_file(struct lc_cfg_list *cfg_list, char *line_buf
 	/* output each cfg item to file */
 	lc_list_for_each_entry(pos, &cfg_list->node, struct lc_cfg_item, node) {
 		char_idx = 0;
+
+		/* skip the path type item */
+		if (pos->assign_type == LC_ASSIGN_TYPE_PATH) {
+			line_num++;
+			continue;
+		}
+
 		/* copy variable name to line buffer */
 		memcpy(line_buffer + char_idx, pos->name, pos->name_len);
 		char_idx += pos->name_len;
@@ -293,8 +323,14 @@ static int lc_output_cfg_to_header_file(struct lc_cfg_list *cfg_list, char *line
 
 	/* output each cfg item to file */
 	lc_list_for_each_entry(pos, &cfg_list->node, struct lc_cfg_item, node) {
-
 		char_idx = 0;
+
+		/* skip the path type item */
+		if (pos->assign_type == LC_ASSIGN_TYPE_PATH) {
+			line_num++;
+			continue;
+		}
+
 		/* skip invalid cfg item */
 		if ((!pos->enable) || (pos->assign_type != LC_ASSIGN_TYPE_DIRECT)) {
 			line_num++;

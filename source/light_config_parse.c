@@ -157,6 +157,72 @@ static int lc_cfg_file_pop(struct lc_ctrl_blk *ctrl_blk, struct lc_cfg_file_item
 }
 
 /*************************************************************************************
+ * @brief: push a cfg file to the stack.
+ * 
+ * @param cfg_file_stk: cfg file stack.
+ * @param item: item of the cfg file.
+ * @return: zero on success, other on failure.
+ ************************************************************************************/
+static int lc_line_ident_push(struct lc_ctrl_blk *ctrl_blk, struct lc_line_indent_item *item)
+{
+	struct lc_line_ident_stk *stk = &(ctrl_blk->line_ident_stk);
+
+	stk->sp++;
+	if (stk->sp >= stk->depth) {
+		lc_err("Error: line ident push fail, num[%lld] overflow[%llu]\n",
+		        stk->sp, stk->depth);
+		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
+	}
+
+	stk->item_stk[stk->sp].item = item->item;
+	stk->item_stk[stk->sp].indent_num = item->indent_num;
+	return 0;
+}
+
+/*************************************************************************************
+ * @brief: push a cfg file to the stack.
+ * 
+ * @param cfg_file_stk: cfg file stack.
+ * @param item: item of the cfg file.
+ * @return: zero on success, other on failure.
+ ************************************************************************************/
+static int lc_line_ident_pop(struct lc_ctrl_blk *ctrl_blk)
+{
+	struct lc_line_ident_stk *stk = &(ctrl_blk->line_ident_stk);
+
+	if (stk->sp < 1) {
+		lc_err("Error: line ident push fail, num[%lld] overflow[%llu]\n",
+		        stk->sp, stk->depth);
+		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
+	}
+
+	stk->sp--;
+	return 0;
+}
+
+/*************************************************************************************
+ * @brief: push a cfg file to the stack.
+ * 
+ * @param cfg_file_stk: cfg file stack.
+ * @param item: item of the cfg file.
+ * @return: zero on success, other on failure.
+ ************************************************************************************/
+static int lc_line_ident_peek_top(struct lc_ctrl_blk *ctrl_blk, struct lc_line_indent_item *item)
+{
+	struct lc_line_ident_stk *stk = &(ctrl_blk->line_ident_stk);
+
+	if (stk->sp < 1 || stk->sp >= stk->depth) {
+		lc_err("Error: line ident push fail, num[%lld] overflow[%llu]\n",
+		        stk->sp, stk->depth);
+		return LC_PARSE_RES_ERR_INC_FILE_NUM_OVERFLOW;
+	}
+
+	item->indent_num = stk->item_stk[stk->sp].indent_num;
+	item->item = stk->item_stk[stk->sp].item;
+	return 0;
+}
+
+/*************************************************************************************
  * @brief: get the previous cfg file name.
  * 
  * @param ctrl_blk: control block.
@@ -285,6 +351,22 @@ static struct lc_cfg_item *lc_find_cfg_item(struct lc_cfg_list *cfg_head, char *
 }
 
 /*************************************************************************************
+ * @brief: get the tail item of the cfg list.
+ *
+ * @param cfg_head: head of the list of the item.
+ * @param name: name.
+ *
+ * @return: cfg_item.
+ ************************************************************************************/
+static struct lc_cfg_item *lc_get_tail_item(struct lc_cfg_list *cfg_head)
+{
+	if (lc_list_is_empty(&cfg_head->node))
+		return NULL;
+
+	return lc_list_last_entry(&cfg_head->node, struct lc_cfg_item, node);
+}
+
+/*************************************************************************************
  * @brief: init lc control block.
  *
  * @param ctrl_blk: control block.
@@ -292,13 +374,13 @@ static struct lc_cfg_item *lc_find_cfg_item(struct lc_cfg_list *cfg_head, char *
  * @param mem_uplimit: memory uplimit, if over the memory uplimit, return error.
  * @param each_mem_blk_size: size of each memory block.
  * @param cfg_file_num_max: max number of include files.
- * @param cfg_file_stk: include file stack.
+ * @param line_ident_max: ident number of each line.
  * 
  * @return: void.
  ************************************************************************************/
 static void lc_cb_init(struct lc_ctrl_blk *ctrl_blk, ull_t line_buff_size,
                        ull_t mem_uplimit, ull_t each_mem_blk_size,
-                       ull_t cfg_file_num_max, void *cfg_file_stk)
+                       ull_t cfg_file_num_max, ul_t line_ident_max)
 {
 	ctrl_blk->line_buff_size = line_buff_size;
 	ctrl_blk->colu_num = 0;
@@ -320,7 +402,11 @@ static void lc_cb_init(struct lc_ctrl_blk *ctrl_blk, ull_t line_buff_size,
 
 	ctrl_blk->cfg_file_stk.depth = cfg_file_num_max;
 	ctrl_blk->cfg_file_stk.sp = 0;
-	ctrl_blk->cfg_file_stk.item_stk = cfg_file_stk;
+	ctrl_blk->cfg_file_stk.item_stk = ctrl_blk->buff_pool + line_buff_size * 8;
+
+	ctrl_blk->line_ident_stk.depth = line_ident_max;
+	ctrl_blk->line_ident_stk.sp = 0;
+	ctrl_blk->line_ident_stk.item_stk = (void *)(ctrl_blk->cfg_file_stk.item_stk + cfg_file_num_max);
 
 	ctrl_blk->default_cfg_head.name = "default config";
 	ctrl_blk->menu_cfg_head.name = "menu config";
@@ -442,6 +528,8 @@ static int lc_cfg_items_init(struct lc_ctrl_blk *ctrl_blk)
 	int i;
 	int ret;
 	char *ptr = NULL;
+	struct lc_cfg_item *cfg_item;
+	struct lc_line_indent_item ident_item;
 
 	/* get top directory */
 	ptr = getcwd(ctrl_blk->temp_buff, ctrl_blk->line_buff_size);
@@ -485,6 +573,16 @@ static int lc_cfg_items_init(struct lc_ctrl_blk *ctrl_blk)
 		return ret;
 	}
 
+	/* push LC_TOPDIR to line ident stack */
+	cfg_item = lc_get_tail_item(&ctrl_blk->menu_cfg_head);
+	ident_item.indent_num = 0;
+	ident_item.item = cfg_item;
+	ret = lc_line_ident_push(ctrl_blk, &ident_item);
+	if (ret < 0) {
+		lc_err("Error: line_ident_push fail\n");
+		return ret;
+	}
+
 	return 0;
 }
 
@@ -501,7 +599,7 @@ static int lc_cfg_items_init(struct lc_ctrl_blk *ctrl_blk)
  ************************************************************************************/
 int light_config_init(struct lc_ctrl_blk *ctrl_blk, ull_t mem_uplimit,
                       ull_t line_buff_size, ull_t cfg_file_num_max,
-                      ull_t each_mem_blk_size)
+                      ul_t line_ident_max, ull_t each_mem_blk_size)
 {
 	int ret;
 	ull_t mem_size;
@@ -519,7 +617,8 @@ int light_config_init(struct lc_ctrl_blk *ctrl_blk, ull_t mem_uplimit,
 		return LC_PARSE_RES_ERR_LINE_BUFF_OVERFLOW;
 	}
 
-	mem_size = line_buff_size * 8 + cfg_file_num_max * sizeof(struct lc_cfg_file_item);
+	mem_size = line_buff_size * 8 + cfg_file_num_max * sizeof(struct lc_cfg_file_item) +
+	           line_ident_max * sizeof(struct lc_line_indent_item);
 	ctrl_blk->buff_pool = malloc(mem_size);
 	if (ctrl_blk->buff_pool == NULL) {
 		lc_err("Error: malloc buff_pool[%llu bytes] failed\n", mem_size);
@@ -528,7 +627,7 @@ int light_config_init(struct lc_ctrl_blk *ctrl_blk, ull_t mem_uplimit,
 
 	/* initialize ctrl_blk */
 	lc_cb_init(ctrl_blk, line_buff_size, mem_uplimit, each_mem_blk_size,
-	         cfg_file_num_max, ctrl_blk->buff_pool + line_buff_size * 8);
+	           cfg_file_num_max, line_ident_max);
 
 	ret = lc_cfg_items_init(ctrl_blk);
 	if (ret < 0) {
@@ -566,6 +665,63 @@ static int lc_find_cfg_item_and_cpy_val(struct lc_ctrl_blk *ctrl_blk,
 	return ref_item->value_len;
 }
 
+static int lc_process_ident(struct lc_ctrl_blk *ctrl_blk, struct lc_parse_ctrl_blk *pcb)
+{
+	int ret;
+	struct lc_cfg_item *cfg_item;
+	struct lc_line_indent_item ident_item;
+
+	/* only process the ident line */
+	if (pcb->line_ident_num == 0)
+		return 0;
+
+	cfg_item = lc_get_tail_item(&ctrl_blk->menu_cfg_head);
+	if (cfg_item == NULL) {
+		lc_err("Error: lc_get_tail_item failed\n");
+		return LC_PARSE_RES_ERR_CTRL_BLK_INVALID;
+	}
+
+	ret = lc_line_ident_peek_top(ctrl_blk, &ident_item);
+	if (ret < 0) {
+		lc_err("Error: lc_line_ident_peek_top failed, ret:%d\n", ret);
+		return ret;
+	}
+
+	if (pcb->line_ident_num == ident_item.indent_num) {
+		pcb->item_en = ident_item.item->enable;
+		return 0;
+	}
+
+	if (pcb->line_ident_num == ident_item.indent_num + 1) {
+		ident_item.indent_num = pcb->line_ident_num;
+		ident_item.item = cfg_item;
+		pcb->item_en = cfg_item->enable;
+		ret = lc_line_ident_push(ctrl_blk, &ident_item);
+		if (ret < 0)
+			lc_err("Error: lc_line_ident_push failed, ret:%d\n", ret);
+		return ret;
+	}
+
+	if (pcb->line_ident_num == ident_item.indent_num - 1) {
+		ret = lc_line_ident_pop(ctrl_blk);
+		if (ret < 0) {
+			lc_err("Error: lc_line_ident_pop failed, ret:%d\n", ret);
+			return ret;
+		}
+
+		ret = lc_line_ident_peek_top(ctrl_blk, &ident_item);
+		if (ret < 0) {
+			lc_err("Error: lc_line_ident_peek_top failed, ret:%d\n", ret);
+			return ret;
+		}
+		pcb->item_en = ident_item.item->enable;
+		return 0;
+	}
+
+	lc_err("Error: indent_num[%lu] is invalid\n", pcb->line_ident_num);
+	return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
+}
+
 /*************************************************************************************
  * @brief: parse the line.
  * 
@@ -575,8 +731,8 @@ static int lc_find_cfg_item_and_cpy_val(struct lc_ctrl_blk *ctrl_blk,
  * 
  * @param zero on success, negative value on error.
  ************************************************************************************/
-int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
-                         ull_t line_num, bool is_default_cfg)
+static int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
+                                ull_t line_num, bool is_default_cfg)
 {
 	int ret;
 	char ch;
@@ -588,6 +744,10 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 		lc_err("Error: ctrl_blk is NULL\n");
 		return LC_PARSE_RES_ERR_CTRL_BLK_INVALID;
 	}
+
+	/* skip comment line */
+	if (ctrl_blk->line_buff[0] == '#' || ctrl_blk->line_buff[0] == '\n')
+		return LC_PARSE_RES_OK_NORMAL_CFG;
 
 	cfg_list = is_default_cfg ? &ctrl_blk->default_cfg_head
 	                          : &ctrl_blk->menu_cfg_head;
@@ -607,7 +767,16 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 
 		/* parse line */
 		switch (cb.next_state) {
+		case 0:
+			cb.line_ident_num++;
+			break;
+
 		case 1:
+			ret = lc_process_ident(ctrl_blk, &cb);
+			if (ret < 0) {
+				lc_err("Error: lc_process_ident failed, ret:%d\n", ret);
+				return ret;
+			}
 			ctrl_blk->item_name_buff[cb.name_idx++] = ch;
 			break;
 
@@ -921,17 +1090,37 @@ int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			ret = lc_add_cfg_item(ctrl_blk, &cfg_list->node, ctrl_blk->item_name_buff,
 			                      cb.name_idx, ctrl_blk->item_value_buff, cb.value_idx,
 			                      cb.assign_type, cb.value_type, cb.item_en);
+			if (ret < 0) {
+				lc_err("Error: lc_add_cfg_item failed, ret:%d\n", ret);
+				return ret;
+			}
 			return LC_PARSE_RES_OK_NORMAL_CFG;
 
 		case LC_PARSE_STATE_INCLUDE:
 			lc_info("path:%s\n", ctrl_blk->inc_path_buff);
-			return LC_PARSE_RES_OK_INCLUDE;
+			ret = lc_process_ident(ctrl_blk, &cb);
+			if (ret < 0) {
+				lc_err("Error: lc_process_ident failed, ret:%d\n", ret);
+				return ret;
+			}
+			ret = lc_add_cfg_item(ctrl_blk, &cfg_list->node, "-include ", 9, 
+			                      ctrl_blk->inc_path_buff, cb.path_idx,
+			                      LC_ASSIGN_TYPE_PATH, LC_VALUE_TYPE_PATH, cb.item_en);
+			if (ret < 0) {
+				lc_err("Error: lc_add_cfg_item failed, ret:%d\n", ret);
+				return ret;
+			}
+			return cb.item_en ? LC_PARSE_RES_OK_INCLUDE : LC_PARSE_RES_OK_NORMAL_CFG;
 
 		case LC_PARSE_STATE_NORMAL_CFG:
 			ctrl_blk->item_value_buff[cb.value_idx] = '\0';
 			ret = lc_add_cfg_item(ctrl_blk, &cfg_list->node, ctrl_blk->item_name_buff,
 			                     cb.name_idx, ctrl_blk->item_value_buff, cb.value_idx,
 			                     cb.assign_type, cb.value_type, cb.item_en);
+			if (ret < 0) {
+				lc_err("Error: lc_add_cfg_item failed, ret:%d\n", ret);
+				return ret;
+			}
 			return LC_PARSE_RES_OK_NORMAL_CFG;
 		}
 
@@ -1059,8 +1248,7 @@ static int lc_parse_cfg_file_with_item(struct lc_ctrl_blk *ctrl_blk, bool is_def
 			goto out;
 		}
 
-		if (ret != LC_PARSE_RES_OK_DEPEND_CFG && ret != LC_PARSE_RES_OK_INCLUDE &&
-		    ret != LC_PARSE_RES_OK_NORMAL_CFG) {
+		if (ret != LC_PARSE_RES_OK_INCLUDE && ret != LC_PARSE_RES_OK_NORMAL_CFG) {
 			lc_err("Error: fail to parse %s line %llu, col[%llu], ret:%d\n",
 			        file_name, line_num, ctrl_blk->colu_num, ret);
 			goto out;

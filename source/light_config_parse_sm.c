@@ -1,5 +1,7 @@
 #include "light_config_parse_sm.h"
 
+#define KEY_TAB                 0x09
+
 /*************************************************************************************
  * @brief: state machine to parse the config file
  * 
@@ -13,6 +15,8 @@ int lc_parse_state_get_next(int current_state, char ch)
 	switch (current_state) {
 	/*---------------------------------- name ----------------------------- */
 	case 0:
+		if (ch == KEY_TAB)
+			return 0;
 		if (ch == '-')
 			return 12;
 		if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'))
@@ -416,14 +420,14 @@ int lc_parse_state_get_next(int current_state, char ch)
 
 	/*---------------------------------- dependences ----------------------------- */
 	case 7000:
-		if (ch == ' ')
+		if (ch == ' ' || ch == KEY_TAB)
 			return 7001;
 		if (ch == '[')
 			return 7002;
 		break;
 
 	case 7001:
-		if (ch == ' ')
+		if (ch == ' ' || ch == KEY_TAB)
 			return 7001;
 		if (ch == '[')
 			return 7002;
@@ -453,7 +457,7 @@ int lc_parse_state_get_next(int current_state, char ch)
 		break;
 
 	case 7005:
-		if (ch == ' ')
+		if (ch == ' ' || ch == KEY_TAB)
 			return 7001;
 		if (ch == '[')
 			return 7002;
@@ -485,7 +489,7 @@ int lc_parse_state_get_next(int current_state, char ch)
 		return 7003;
 
 	case 7050:
-		if (ch == ' ')
+		if (ch == ' ' || ch == KEY_TAB)
 			return 7051;
 		if (ch == '&')
 			return 7052;
@@ -494,7 +498,7 @@ int lc_parse_state_get_next(int current_state, char ch)
 		break;
 
 	case 7051:
-		if (ch == ' ')
+		if (ch == ' ' || ch == KEY_TAB)
 			return 7051;
 		if (ch == '&')
 			return 7052;
@@ -512,7 +516,7 @@ int lc_parse_state_get_next(int current_state, char ch)
 	case 7053:
 		if (ch == '&' || ch == '|' || ch == '!' || ch == '(' || ch == ')')
 			return 7053;
-		if (ch == ' ')
+		if (ch == ' ' || ch == KEY_TAB)
 			return 7054;
 		if (ch == '<')
 			return 7055;
