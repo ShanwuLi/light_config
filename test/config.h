@@ -67,5 +67,7 @@ SOFTWARE.
 #define CONFIG_PL_HI_WORKQUEUE_TASK_STACK_SIZE   1024
 #define CONFIG_PL_HI_WORKQUEUE_FIFO_CAPACITY   128
 #define dhkcjkejvk   JEHdew
+#define ARCH   host
+#define CONFIG_PL_HOST_EN
 
 #endif /* __CONFIG_H__*/

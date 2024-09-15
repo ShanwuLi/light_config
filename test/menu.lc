@@ -18,13 +18,12 @@ DEWFE = 78787810000
 
 
 
-SOURCE-<dehfh> = CSRC/ZZ/YY<TDWUEFYUEWYF>
+SOURCE    = CSRC/ZZ/YY<TDWUEFYUEWYF>
 gwgewhwh-n  = [*] & !<dehfh> & <HDEJKJK>
 
 CONFIG_PL_TASK_PRIORITIES_MAX = [@range([-0], [2.04])]
 
-dhwejkc-<dehfh> = [@<CSRC> ? ([<TDWUEFYUEWYF>],\
-		[<TDWUEFYUEWYF>747329<TDWUEFYUEWYF>])]
+dhwejkc = [@<SOURCE> ? ([<TDWUEFYUEWYF>], [<TDWUEFYUEWYF>747329<TDWUEFYUEWYF>])]
 
 dwjekwje += flek
 
@@ -66,6 +65,14 @@ CONFIG_PL_LO_WORKQUEUE_SUPPORT               = [@menu([y], [n])]
 dhkcjkejvk = <CONFIG_HDEJ>dew
 
 HDHEWCEJWKV = [@compare([dweh<CONFIG_HDEJ>jekw], [dweh<dhkcjkejvk>jekw])]
+
+
+ARCH = host
+
+CONFIG_PL_HOST_EN    = y
+ENTRY_SOURCE         := [@<CONFIG_PL_HOST_EN> ? ([$(KERNEL_ENTER_DIR)/host_entry.c], [$(KERNEL_ENTER_DIR)/entry.c])]
+
+C_SRCS               += <ENTRY_SOURCE>
 
 
 

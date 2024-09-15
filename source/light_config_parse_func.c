@@ -55,7 +55,7 @@ static int lc_parse_array_terminal_func_select(struct lc_ctrl_blk *ctrl_blk,
 int lc_parse_func_select_init(struct lc_ctrl_blk *ctrl_blk,
                     struct lc_parse_ctrl_blk *pcb, char ch)
 {
-	if (pcb->default_item == NULL) {
+	if (pcb->ref_item == NULL) {
 		lc_err("Error: ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
 				          pcb->line_num, ctrl_blk->colu_num);

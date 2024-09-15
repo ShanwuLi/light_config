@@ -257,8 +257,10 @@ void lc_dump_cfg_item_list(struct lc_cfg_list *cfg_head)
 {
 	struct lc_cfg_item *pos;
 
-	if (lc_list_is_empty(&cfg_head->node))
+	if (lc_list_is_empty(&cfg_head->node)) {
+		lc_err("Error: cfg list is empty\n");
 		return;
+	}
 
 	lc_list_for_each_entry(pos, &cfg_head->node, struct lc_cfg_item, node) {
 		lc_err("Error: name:%s, len:%d, en:%d, value:%s, len:%d, assign_type:%d, hash:0x%llx\n",
