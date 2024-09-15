@@ -11,7 +11,7 @@ DGEHK = 00
 dhwjhjweh += [] & <UU>
 
 BAUD   ?= [@menu([960035], [960078], [1152<DGEHK>], [dhweckwev])]
-CSRC-n   =   [<BAUD>]
+CSRC   =   [<BAUD>]
 TDWUEFYUEWYF = wggww
 
 DEWFE = 78787810000
@@ -62,3 +62,11 @@ CONFIG_PL_LO_WORKQUEUE_SUPPORT               = [@menu([y], [n])]
 	CONFIG_PL_LO_WORKQUEUE_FIFO_CAPACITY     = [@range([128], [4096])]
 
 -include-n    "test_default.cfg"
+
+dhkcjkejvk = <CONFIG_HDEJ>dew
+
+HDHEWCEJWKV = [@compare([dweh<CONFIG_HDEJ>jekw], [dweh<dhkcjkejvk>jekw])]
+
+
+
+

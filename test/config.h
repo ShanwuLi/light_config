@@ -29,11 +29,12 @@ SOFTWARE.
 #define LC_TOPDIR   F:/light_config/test
 #define dehfh
 #define DGEHK   00
+#define CSRC   115200
 #define TDWUEFYUEWYF   wggww
 #define DEWFE   78787810000
 #define SOURCE   CSRC/ZZ/YYwggww
 #define CONFIG_PL_TASK_PRIORITIES_MAX   2.0
-#define dhwejkc   wggww747329wggww
+#define dhwejkc   wggww
 #define OS_TOPDIR   .
 #define CXXSRC   ./dhwehe.c
 #define CONFIG_TEST1   yde
@@ -65,5 +66,6 @@ SOFTWARE.
 #define CONFIG_PL_HI_WORKQUEUE_SUPPORT
 #define CONFIG_PL_HI_WORKQUEUE_TASK_STACK_SIZE   1024
 #define CONFIG_PL_HI_WORKQUEUE_FIFO_CAPACITY   128
+#define dhkcjkejvk   JEHdew
 
 #endif /* __CONFIG_H__*/

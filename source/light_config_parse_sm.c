@@ -295,7 +295,7 @@ int lc_parse_state_get_next(int current_state, char ch)
 			return 201;
 		if (ch == 't')
 			return 205;
-		if (ch == 'a')
+		if (ch == 'c')
 			return 210;
 		if (ch == 'r')
 			return 220;
@@ -347,22 +347,22 @@ int lc_parse_state_get_next(int current_state, char ch)
 		break;
 
 	case 210:
-		if (ch == 'd')
+		if (ch == 'o')
 			return 211;
 		break;
 
 	case 211:
-		if (ch == 'd')
+		if (ch == 'm')
 			return 212;
 		break;
 
 	case 212:
-		if (ch == '_')
+		if (ch == 'p')
 			return 213;
 		break;
 
 	case 213:
-		if (ch == 'p')
+		if (ch == 'a')
 			return 214;
 		break;
 
@@ -377,23 +377,8 @@ int lc_parse_state_get_next(int current_state, char ch)
 		break;
 
 	case 216:
-		if (ch == 'f')
-			return 217;
-		break;
-
-	case 217:
-		if (ch == 'i')
-			return 218;
-		break;
-
-	case 218:
-		if (ch == 'x')
-			return 219;
-		break;
-
-	case 219:
 		if (ch == '(')
-			return 7000; /* aadd_prefix */
+			return 7000; /* compare */
 		break;
 
 	case 220:

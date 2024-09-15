@@ -381,3 +381,149 @@ int lc_parse_func_range_init(struct lc_ctrl_blk *ctrl_blk, struct lc_parse_ctrl_
 
 	return 0;
 }
+
+/*************************************************************************************
+ * @brief: parse compare function.
+ *
+ * @param ctrl_blk: control block.
+ * @param pcb: parse control block.
+ * @param ch: char.
+ *
+ * @return: zero on success, else error code.
+ ************************************************************************************/
+static int lc_parse_elem_start_func_compare(struct lc_ctrl_blk *ctrl_blk,
+                                  struct lc_parse_ctrl_blk *pcb, char ch)
+{
+	if (pcb->arr_elem_idx == 2) {
+		lc_err("Error: element over num:%d of compare func\n", pcb->arr_elem_idx);
+		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
+	}
+
+	pcb->temp_idx = 0;
+	return 0;
+}
+
+/*************************************************************************************
+ * @brief: parse compare function.
+ *
+ * @param ctrl_blk: control block.
+ * @param pcb: parse control block.
+ * @param ch: char.
+ *
+ * @return: zero on success, else error code.
+ ************************************************************************************/
+static int lc_parsing_elem_func_compare(struct lc_ctrl_blk *ctrl_blk,
+                              struct lc_parse_ctrl_blk *pcb, char ch)
+{
+	if (pcb->match_state != 0)
+		return 0;
+
+	switch (pcb->arr_elem_idx) {
+	case 0:
+		ctrl_blk->temp_buff[pcb->arr_elem_ch_idx] = ch;
+		break;
+	
+	case 1:
+		if (pcb->arr_elem_ch_idx > pcb->location) {
+			pcb->match_state = -1;
+			return 0;
+		}
+		if (ch != ctrl_blk->temp_buff[pcb->arr_elem_ch_idx]) {
+			pcb->match_state = -1;
+			return 0;
+		}
+		break;
+	
+	default:
+		lc_err("Error: element over num:%d of compare func\n", pcb->arr_elem_idx);
+		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
+	}
+
+	return 0;
+}
+
+/*************************************************************************************
+ * @brief: parse compare function.
+ *
+ * @param ctrl_blk: control block.
+ * @param pcb: parse control block.
+ * @param ch: char.
+ *
+ * @return: zero on success, else error code.
+ ************************************************************************************/
+static int lc_parse_elem_end_func_compare(struct lc_ctrl_blk *ctrl_blk,
+                              struct lc_parse_ctrl_blk *pcb, char ch)
+{
+	if (pcb->match_state != 0)
+		return 0;
+
+	switch (pcb->arr_elem_idx) {
+	case 0:
+		pcb->location = pcb->arr_elem_ch_idx;
+		break;
+	
+	case 1:
+		if (pcb->arr_elem_ch_idx == pcb->location)
+			pcb->match_state = 1;
+		else
+			pcb->match_state = -1;
+		break;
+	
+	default:
+		lc_err("Error: element over num:%d of compare func\n", pcb->arr_elem_idx);
+		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
+	}
+
+	return 0;
+}
+
+/*************************************************************************************
+ * @brief: parse compare terminal function.
+ *
+ * @param ctrl_blk: control block.
+ * @param pcb: parse control block.
+ * @param ch: char.
+ *
+ * @return: zero on success, else error code.
+ ************************************************************************************/
+static int lc_parse_array_terminal_func_compare(struct lc_ctrl_blk *ctrl_blk,
+                                      struct lc_parse_ctrl_blk *pcb, char ch)
+{
+	switch (pcb->match_state) {
+	case -1:
+		pcb->item_en = false;
+		return 0;
+
+	case 1:
+		return 0;
+	
+	default:
+		lc_err("Error: element invalid num:%d of compare func\n", pcb->arr_elem_idx);
+		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
+	}
+
+	return 0;
+}
+
+/*************************************************************************************
+ * @brief: parse range init function.
+ *
+ * @param ctrl_blk: control block.
+ * @param pcb: parse control block.
+ * @param ch: char.
+ *
+ * @return: zero on success, else error code.
+ ************************************************************************************/
+int lc_parse_func_compare_init(struct lc_ctrl_blk *ctrl_blk, struct lc_parse_ctrl_blk *pcb, char ch)
+{
+	pcb->temp_idx = 0;
+	pcb->location = 0;
+	pcb->match_state = 0;
+
+	pcb->parse_elem_start = lc_parse_elem_start_func_compare;
+	pcb->parsing_elem = lc_parsing_elem_func_compare;
+	pcb->parse_elem_end = lc_parse_elem_end_func_compare;
+	pcb->parse_array_terminal = lc_parse_array_terminal_func_compare;
+
+	return 0;
+}

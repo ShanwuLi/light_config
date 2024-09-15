@@ -958,6 +958,12 @@ static int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 				return -cb.next_state - 1;
 			break;
 		
+		case 216:
+			ret = lc_parse_func_compare_init(ctrl_blk, &cb, ch);
+			if (ret < 0)
+				return -cb.next_state - 1;
+			break;
+		
 		case 224:
 			ret = lc_parse_func_range_init(ctrl_blk, &cb, ch);
 			if (ret < 0)
