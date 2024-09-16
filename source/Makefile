@@ -22,12 +22,12 @@ all: ../out/$(EXEC)
 
 # Rule to compile the executable
 ../out/$(EXEC): $(OBJS)
-	$(HOSTCC) $(CFLAGS) -o $@ $^
+	@$(HOSTCC) $(CFLAGS) -o $@ $^
 
 # Rule to compile each .c file into an .o file
 ../out/%.o: %.c
-	$(DIR_GUARD)
-	$(HOSTCC) $(CFLAGS) -c $< -o $@
+	@$(DIR_GUARD)
+	@$(HOSTCC) $(CFLAGS) -c $< -o $@
 
 # Target to clean up the object files and the executable
 clean:
