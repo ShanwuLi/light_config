@@ -451,6 +451,10 @@ int lc_parse_state_get_next(int current_state, char ch)
 		break;
 
 	case 7006:
+		if (ch == ' ' || ch == KEY_TAB)
+			return 152;
+		if (ch == '?')
+			return 154;
 		if (ch == ']')
 			return 7050;
 		break;

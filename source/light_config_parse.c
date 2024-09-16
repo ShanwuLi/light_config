@@ -669,10 +669,16 @@ static int lc_find_cfg_item_and_cpy_val(struct lc_ctrl_blk *ctrl_blk,
 	if (ref_item == NULL)
 		return LC_PARSE_RES_ERR_CFG_ITEM_NOT_FOUND;
 
-	memcpy(dst, ref_item->value, ref_item->value_len);
-	dst[ref_item->value_len] = '\0';
+	if (ref_item->enable) {
+		memcpy(dst, ref_item->value, ref_item->value_len);
+		dst[ref_item->value_len] = '\0';
+		return ref_item->value_len;
 
-	return ref_item->value_len;
+	} else {
+		dst[0] = 'n';
+		dst[1] = '\0';
+		return 1;
+	}
 }
 
 /*************************************************************************************
@@ -951,7 +957,7 @@ static int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 		case 154:
 			ret = lc_parse_func_select_init(ctrl_blk, &cb, ch);
 			if (ret < 0)
-				return -cb.next_state - 1;;
+				return -cb.next_state - 1;
 			break;
 		
 		case 204:
@@ -973,6 +979,8 @@ static int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 			break;
 		
 		case 7000:
+			cb.arr_elem_ch_idx = 0;
+			cb.arr_elem_idx = 0;
 			cb.temp_idx = 0;
 			break;
 		
@@ -1042,6 +1050,8 @@ static int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 
 		case 7050:
 			ctrl_blk->item_value_buff[cb.value_idx] = '\0';
+			if (cb.match_state != 0)
+				cb.item_en = (cb.match_state == 1) ? true : false;
 			if (!cb.item_en)
 				ctrl_blk->line_buff[cb.char_idx] = '\n';
 			break;

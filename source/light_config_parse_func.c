@@ -15,7 +15,34 @@ static int lc_parsing_elem_func_select(struct lc_ctrl_blk *ctrl_blk,
                              struct lc_parse_ctrl_blk *pcb, char ch)
 {
 	if (pcb->select == pcb->arr_elem_idx)
-		ctrl_blk->temp_buff[pcb->temp_idx++] = ch;
+		ctrl_blk->temp_buff[pcb->arr_elem_ch_idx] = ch;
+	return 0;
+}
+
+/*************************************************************************************
+ * @brief: parse select function.
+ *
+ * @param ctrl_blk: control block.
+ * @param pcb: parse control block.
+ * @param ch: char.
+ *
+ * @return: zero on success, else error code.
+ ************************************************************************************/
+static int lc_parse_elem_end_func_select(struct lc_ctrl_blk *ctrl_blk,
+                               struct lc_parse_ctrl_blk *pcb, char ch)
+{
+	if (pcb->arr_elem_idx > 2) {
+		lc_err("Error: element num[%d] must be 2 with the [@<MACRO>] ? ([x], [y])\n",
+		        pcb->arr_elem_idx);
+		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
+	}
+
+	if (pcb->select == pcb->arr_elem_idx) {
+		ctrl_blk->temp_buff[pcb->arr_elem_ch_idx] = '\0';
+		memcpy(ctrl_blk->item_value_buff, ctrl_blk->temp_buff, pcb->arr_elem_ch_idx);
+		pcb->value_idx += pcb->arr_elem_ch_idx;
+	}
+
 	return 0;
 }
 
@@ -37,9 +64,7 @@ static int lc_parse_array_terminal_func_select(struct lc_ctrl_blk *ctrl_blk,
 		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 	}
 
-	ctrl_blk->temp_buff[pcb->temp_idx] = '\0';
-	memcpy(ctrl_blk->item_value_buff, ctrl_blk->temp_buff, pcb->temp_idx + 1);
-	pcb->value_idx += pcb->temp_idx;
+	pcb->match_state = 0;
 	return 0;
 }
 
@@ -55,6 +80,15 @@ static int lc_parse_array_terminal_func_select(struct lc_ctrl_blk *ctrl_blk,
 int lc_parse_func_select_init(struct lc_ctrl_blk *ctrl_blk,
                     struct lc_parse_ctrl_blk *pcb, char ch)
 {
+	pcb->parsing_elem = lc_parsing_elem_func_select;
+	pcb->parse_elem_end = lc_parse_elem_end_func_select;
+	pcb->parse_array_terminal = lc_parse_array_terminal_func_select;
+
+	if (pcb->match_state != 0) {
+		pcb->select = (pcb->match_state == 1 ? 0 : 1);
+		return 0;
+	}
+
 	if (pcb->ref_item == NULL) {
 		lc_err("Error: ref macro[%s] not found in %s line %llu, col %llu\n",
 				          ctrl_blk->ref_name_buff, ctrl_blk->file_name_buff,
@@ -63,8 +97,6 @@ int lc_parse_func_select_init(struct lc_ctrl_blk *ctrl_blk,
 	}
 
 	pcb->select = (pcb->ref_item->enable ? 0 : 1);
-	pcb->parsing_elem = lc_parsing_elem_func_select;
-	pcb->parse_array_terminal = lc_parse_array_terminal_func_select;
 	return 0;
 }
 
@@ -142,6 +174,7 @@ static int lc_parse_array_terminal_func_menu(struct lc_ctrl_blk *ctrl_blk,
 		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 	}
 
+	pcb->match_state = 0;
 	memcpy(ctrl_blk->item_value_buff, pcb->default_item->value,
 	       pcb->default_item->value_len);
 	pcb->value_idx += pcb->default_item->value_len;
@@ -328,6 +361,7 @@ static int lc_parse_elem_end_func_range(struct lc_ctrl_blk *ctrl_blk,
 static int lc_parse_array_terminal_func_range(struct lc_ctrl_blk *ctrl_blk,
                                     struct lc_parse_ctrl_blk *pcb, char ch)
 {
+	pcb->match_state = 0;
 	memcpy(ctrl_blk->item_value_buff, pcb->default_item->value,
 	       pcb->default_item->value_len);
 	pcb->value_idx += pcb->default_item->value_len;
@@ -489,15 +523,7 @@ static int lc_parse_elem_end_func_compare(struct lc_ctrl_blk *ctrl_blk,
 static int lc_parse_array_terminal_func_compare(struct lc_ctrl_blk *ctrl_blk,
                                       struct lc_parse_ctrl_blk *pcb, char ch)
 {
-	switch (pcb->match_state) {
-	case -1:
-		pcb->item_en = false;
-		return 0;
-
-	case 1:
-		return 0;
-	
-	default:
+	if (pcb->match_state != -1 && pcb->match_state != 1) {
 		lc_err("Error: element invalid num:%d of compare func\n", pcb->arr_elem_idx);
 		return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
 	}

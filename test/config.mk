@@ -92,3 +92,5 @@ ARCH = host
 CONFIG_PL_HOST_EN = y
 ENTRY_SOURCE := $(KERNEL_ENTER_DIR)/host_entry.c
 C_SRCS += $(KERNEL_ENTER_DIR)/host_entry.c
+dhwjkwcwevewv := $(KERNEL_ENTER_DIR)/host_entry.c
+C_SRCS += $(KERNEL_ENTER_DIR)/host_entry.c

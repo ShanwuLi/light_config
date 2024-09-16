@@ -74,6 +74,8 @@ ENTRY_SOURCE         := [@<CONFIG_PL_HOST_EN> ? ([$(KERNEL_ENTER_DIR)/host_entry
 
 C_SRCS               += <ENTRY_SOURCE>
 
+dhwjkwcwevewv         := [@compare([dweh<CONFIG_HDEJ>jekw], [dweh<CONFIG_HDEJ>jekw]) ? ([$(KERNEL_ENTER_DIR)/host_entry.c], [dhej<ENTRY_SOURCE>/entry.c])]
 
+C_SRCS               += <dhwjkwcwevewv>
 
 
