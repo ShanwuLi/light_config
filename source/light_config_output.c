@@ -137,32 +137,6 @@ static int lc_output_cfg_to_merged_file(struct lc_cfg_list *cfg_list, char *line
 
 		/* write the line to file */
 		fwrite(line_buffer, char_idx, 1, merged_cfg_fp);
-
-		/* write the value to file */
-		if (!pos->enable) {
-			char_idx = 0;
-			/* copy variable name to line buffer */
-			memcpy(line_buffer, pos->name, pos->name_len);
-			char_idx += pos->name_len;
-
-			if (pos->assign_type == LC_ASSIGN_TYPE_ADDITION) {
-				memcpy(line_buffer + char_idx, " += n\n", 6);
-				char_idx += 6;
-			} else if (pos->assign_type == LC_ASSIGN_TYPE_CONDITIONAL) {
-				memcpy(line_buffer + char_idx, " ?= n\n", 6);
-				char_idx += 6;
-			} else if (pos->assign_type == LC_ASSIGN_TYPE_IMMEDIATE) {
-				memcpy(line_buffer + char_idx, " := n\n", 6);
-				char_idx += 6;
-			} else {
-				memcpy(line_buffer + char_idx, " = n\n", 5);
-				char_idx += 5;
-			}
-			
-			/* write the line to file */
-			fwrite(line_buffer, char_idx, 1, merged_cfg_fp);
-		}
-
 		line_num++;
 	}
 
