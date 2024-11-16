@@ -482,68 +482,103 @@ int lc_parse_state_get_next(int current_state, char ch)
 	case 7050:
 		if (ch == ' ' || ch == KEY_TAB)
 			return 7051;
-		if (ch == '&')
+		if (ch == '-')
 			return 7052;
 		if (ch == '\n')
 			return LC_PARSE_STATE_DEPEND_CFG;
 		break;
 
 	case 7051:
+		if (ch == '-')
+			return 7052;
 		if (ch == ' ' || ch == KEY_TAB)
 			return 7051;
-		if (ch == '&')
-			return 7052;
 		break;
 
 	case 7052:
-		if (ch == '!' || ch == '(')
+		if (ch == 'd')
 			return 7053;
-		if (ch == ' ')
-			return 7054;
-		if (ch == '<')
-			return 7055;
 		break;
 
 	case 7053:
-		if (ch == '&' || ch == '|' || ch == '!' || ch == '(' || ch == ')')
-			return 7053;
-		if (ch == ' ' || ch == KEY_TAB)
+		if (ch == 'e')
 			return 7054;
-		if (ch == '<')
-			return 7055;
-		if (ch == '\n')
-			return LC_PARSE_STATE_DEPEND_CFG;
 		break;
 
 	case 7054:
-		if (ch == '&' || ch == '|' || ch == '!' || ch == '(' || ch == ')')
-			return 7053;
-		if (ch == ' ' || ch == KEY_TAB)
-			return 7054;
-		if (ch == '<')
+		if (ch == 'p')
 			return 7055;
 		break;
 
 	case 7055:
-		if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'))
+		if (ch == 'e')
 			return 7056;
 		break;
 
 	case 7056:
-		if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
-		    (ch >= '0' && ch <= '9') || ch == '_')
-			return 7056;
-		if (ch == '>')
+		if (ch == 'n')
 			return 7057;
 		break;
 
 	case 7057:
-		if (ch == '\n')
-			return LC_PARSE_STATE_DEPEND_CFG;
-		if (ch == '&' || ch == '|' || ch == '!' || ch == '(' || ch == ')')
-			return 7053;
+		if (ch == 'd')
+			return 7058;
+		break;
+	
+	case 7058:
+		if (ch == '[')
+			return 7059;
+		break;
+
+	case 7059:
+		if (ch == '!' || ch == '(')
+			return 7060;
 		if (ch == ' ' || ch == KEY_TAB)
-			return 7054;
+			return 7061;
+		if (ch == '<')
+			return 7062;
+		break;
+
+	case 7060:
+		if (ch == '&' || ch == '|' || ch == '!' || ch == '(' || ch == ')')
+			return 7060;
+		if (ch == ' ' || ch == KEY_TAB)
+			return 7061;
+		if (ch == '<')
+			return 7062;
+		if (ch == ']')
+			return 7050;
+		break;
+
+	case 7061:
+		if (ch == '&' || ch == '|' || ch == '!' || ch == '(' || ch == ')')
+			return 7060;
+		if (ch == ' ' || ch == KEY_TAB)
+			return 7061;
+		if (ch == '<')
+			return 7062;
+		break;
+
+	case 7062:
+		if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'))
+			return 7063;
+		break;
+
+	case 7063:
+		if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+		    (ch >= '0' && ch <= '9') || ch == '_')
+			return 7063;
+		if (ch == '>')
+			return 7064;
+		break;
+
+	case 7064:
+		if (ch == ']')
+			return 7050;
+		if (ch == '&' || ch == '|' || ch == '!' || ch == '(' || ch == ')')
+			return 7060;
+		if (ch == ' ' || ch == KEY_TAB)
+			return 7061;
 		break;
 
 	/*---------------------------------- normal config ----------------------------- */

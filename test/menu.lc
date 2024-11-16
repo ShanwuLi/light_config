@@ -8,7 +8,13 @@ afasgasg     = n
 
 DGEHK = 00
 
-dhwjhjweh += [] & <UU>
+dhwjhjweh += []\
+-depend[<UU> & <UU> & <UU> & <UU> & <UU> & <UU> & <UU> & <UU> &\
+        <UU> & <UU> & <UU> & <UU> & <UU> & <UU> & <UU> & <UU> &\
+        <UU> & <UU> & <UU> & <UU> & <UU> & <UU> & <UU> & <UU> & <UU>]\
+-depend[<UU> & <UU> & <UU> & <UU> & <UU> & <UU> & <UU> & <UU> &\
+        <UU> & <UU> & <UU> & <UU> & <UU> & <UU> & <UU> & <UU> &\
+        <UU> & <UU> & <UU> & <UU> & <UU> & <UU> & <UU> & <UU> & <UU>]
 
 BAUD   ?= [@menu([960035], [960078], [1152<DGEHK>], [dhweckwev])]
 CSRC   =   [<BAUD>]

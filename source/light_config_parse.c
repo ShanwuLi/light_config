@@ -1056,23 +1056,23 @@ static int light_config_parse_cfg_line(struct lc_ctrl_blk *ctrl_blk,
 				ctrl_blk->line_buff[cb.char_idx] = '\n';
 			break;
 		
-		case 7052:
+		case 7059:
 			cb.expr_idx = 0;
 			break;
 		
-		case 7053:
+		case 7060:
 			ctrl_blk->logic_expr_buff[cb.expr_idx++] = ch;
 			break;
 		
-		case 7055:
+		case 7062:
 			cb.ref_name_idx = 0;
 			break;
 		
-		case 7056:
+		case 7063:
 			ctrl_blk->ref_name_buff[cb.ref_name_idx++] = ch;
 			break;
 
-		case 7057:
+		case 7064:
 			ctrl_blk->ref_name_buff[cb.ref_name_idx] = '\0';
 			cb.ref_item = lc_find_cfg_item(&ctrl_blk->menu_cfg_head, ctrl_blk->ref_name_buff);
 			if (cb.ref_item == NULL) {
