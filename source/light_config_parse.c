@@ -714,7 +714,12 @@ static int lc_process_ident_dependency(struct lc_ctrl_blk *ctrl_blk,
 		return 0;
 	}
 
-	if (pcb->line_ident_num == ident_item.indent_num + 1) {
+	if (pcb->line_ident_num > ident_item.indent_num) {
+		if (pcb->line_ident_num != ident_item.indent_num + 1) {
+			lc_err("Error: indent num[%lu] is invalid\n", pcb->line_ident_num);
+			return LC_PARSE_RES_ERR_CFG_ITEM_INVALID;
+		}
+
 		ident_item.indent_num = pcb->line_ident_num;
 		ident_item.item = cfg_item;
 		pcb->item_en = pcb->item_en && cfg_item->enable;
