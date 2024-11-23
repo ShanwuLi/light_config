@@ -692,6 +692,7 @@ static int lc_find_cfg_item_and_cpy_val(struct lc_ctrl_blk *ctrl_blk,
 static int lc_process_ident_dependency(struct lc_ctrl_blk *ctrl_blk,
                                       struct lc_parse_ctrl_blk *pcb)
 {
+	int i;
 	int ret;
 	struct lc_cfg_item *cfg_item;
 	struct lc_line_indent_item ident_item;
@@ -723,11 +724,13 @@ static int lc_process_ident_dependency(struct lc_ctrl_blk *ctrl_blk,
 		return ret;
 	}
 
-	if (pcb->line_ident_num == ident_item.indent_num - 1) {
-		ret = lc_line_ident_pop(ctrl_blk);
-		if (ret < 0) {
-			lc_err("Error: ident pop failed, ret:%d\n", ret);
-			return ret;
+	if (pcb->line_ident_num < ident_item.indent_num) {
+		for (i = 0; i < ident_item.indent_num - pcb->line_ident_num; i++) {
+			ret = lc_line_ident_pop(ctrl_blk);
+			if (ret < 0) {
+				lc_err("Error: ident pop failed, ret:%d\n", ret);
+				return ret;
+			}
 		}
 
 		ret = lc_line_ident_peek_top(ctrl_blk, &ident_item);
